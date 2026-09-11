@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>London Heathrow (EGLL) 3D Flight Tracker</title>
+  <title>UK Military Airfield 3D Flight Tracker</title>
 
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"></script>
@@ -15,6 +15,17 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
       color: #fff;
     }
+
+    /* Complete suppression of Cesium branding, credits, and default widgets */
+    .cesium-widget-credits,
+    .cesium-credit-logoContainer,
+    .cesium-credit-textContainer,
+    .cesium-credit-expand-link {
+      display: none !important;
+      visibility: hidden !important;
+      pointer-events: none !important;
+    }
+
     .overlay-panel {
       position: absolute;
       background: rgba(13, 17, 23, 0.88);
@@ -24,7 +35,8 @@
       backdrop-filter: blur(10px);
       z-index: 100;
     }
-    #hud-telemetry { top: 20px; left: 20px; width: 290px; }
+    #hud-telemetry { top: 20px; left: 20px; width: 310px; }
+    #hud-selector { top: 20px; right: 20px; width: 280px; }
     .hud-title {
       font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
       color: #38bdf8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -33,45 +45,133 @@
     .data-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 13px; }
     .data-label { color: #94a3b8; }
     .data-val { font-weight: 600; font-family: monospace; color: #f8fafc; }
+    
+    select {
+      width: 100%; background: #1e293b; color: #38bdf8; border: 1px solid #0284c7;
+      padding: 8px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;
+      outline: none; margin-top: 4px;
+    }
+    
     #hud-controls { bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
     button {
       background: #1e293b; color: #38bdf8; border: 1px solid #0284c7;
       padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;
     }
     button.active { background: #0284c7; color: #fff; }
+
+    /* Tactical Cockpit / External Nose HUD Reticle */
+    #cockpit-hud-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      display: none;
+      z-index: 90;
+    }
+    .hud-reticle-svg {
+      width: 100%;
+      height: 100%;
+      stroke: #00ff66;
+      fill: none;
+      stroke-width: 1.5;
+      font-family: monospace;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
   <div id="cesiumContainer"></div>
 
+  <!-- External/Nose HUD Reticle Overlay -->
+  <div id="cockpit-hud-overlay">
+    <svg class="hud-reticle-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <filter id="hud-glow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#00ff66" />
+        </filter>
+      </defs>
+      <g filter="url(#hud-glow)">
+        <!-- Center Boresight Cross -->
+        <path d="M 485 500 L 495 500 M 505 500 L 515 500 M 500 485 L 500 495 M 500 505 L 500 515" />
+        <circle cx="500" cy="500" r="3" />
+
+        <!-- Velocity Vector Indicator (Flight Path Marker) -->
+        <circle cx="500" cy="500" r="10" />
+        <line x1="490" y1="500" x2="475" y2="500" />
+        <line x1="510" y1="500" x2="525" y2="500" />
+        <line x1="500" y1="490" x2="500" y2="475" />
+
+        <!-- Pitch Reference Lines -->
+        <line x1="360" y1="500" x2="440" y2="500" stroke-dasharray="8 4" />
+        <line x1="560" y1="500" x2="640" y2="500" stroke-dasharray="8 4" />
+
+        <path d="M 410 440 L 440 440 L 440 448 M 590 440 L 560 440 L 560 448" />
+        <text x="390" y="444" fill="#00ff66" stroke="none">+5</text>
+        <text x="600" y="444" fill="#00ff66" stroke="none">+5</text>
+
+        <path d="M 410 560 L 440 560 L 440 552 M 590 560 L 560 560 L 560 552" stroke-dasharray="6 3" />
+        <text x="390" y="564" fill="#00ff66" stroke="none">-5</text>
+        <text x="600" y="564" fill="#00ff66" stroke="none">-5</text>
+
+        <!-- Heading Scale Tape (Top) -->
+        <rect x="380" y="70" width="240" height="28" stroke="#00ff66" />
+        <polygon points="500,103 495,110 505,110" fill="#00ff66" />
+        <text id="hud-cockpit-hdg" x="500" y="90" text-anchor="middle" fill="#00ff66" stroke="none" font-weight="bold" font-size="14">HDG: ---°</text>
+
+        <!-- Airspeed Indicator (Left) -->
+        <rect x="230" y="380" width="80" height="240" stroke="#00ff66" />
+        <text x="270" y="405" text-anchor="middle" fill="#00ff66" stroke="none">GS KTS</text>
+        <text id="hud-cockpit-spd" x="270" y="505" text-anchor="middle" fill="#00ff66" stroke="none" font-size="20" font-weight="bold">---</text>
+
+        <!-- Altitude Indicator (Right) -->
+        <rect x="690" y="380" width="90" height="240" stroke="#00ff66" />
+        <text x="735" y="405" text-anchor="middle" fill="#00ff66" stroke="none">ALT FT</text>
+        <text id="hud-cockpit-alt" x="735" y="505" text-anchor="middle" fill="#00ff66" stroke="none" font-size="20" font-weight="bold">---</text>
+      </g>
+    </svg>
+  </div>
+
   <div id="hud-telemetry" class="overlay-panel">
-    <div class="hud-title">Heathrow (EGLL) Telemetry</div>
-    <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">BAW-7598</span></div>
-    <div class="data-row"><span class="data-label">Approach:</span><span class="data-val">ILS Rwy 27R</span></div>
+    <div class="hud-title" id="hud-station-title">RAF Station Telemetry</div>
+    <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">RRR-7598</span></div>
+    <div class="data-row"><span class="data-label">Approach:</span><span class="data-val" id="hud-approach">15-mile Final</span></div>
     <div class="data-row"><span class="data-label">Altitude:</span><span class="data-val" id="hud-alt">-- ft</span></div>
     <div class="data-row"><span class="data-label">Ground Speed:</span><span class="data-val" id="hud-speed">-- kts</span></div>
     <div class="data-row"><span class="data-label">Position:</span><span class="data-val" id="hud-coords">-- , --</span></div>
   </div>
 
+  <div id="hud-selector" class="overlay-panel">
+    <div class="hud-title">Select RAF Airfield</div>
+    <select id="airfieldSelect">
+      <option value="heathrow">London Heathrow (EGLL) [Default]</option>
+      <option value="coningsby">RAF Coningsby (EGXC)</option>
+      <option value="lossiemouth">RAF Lossiemouth (EGQS)</option>
+      <option value="brize">RAF Brize Norton (EGVN)</option>
+      <option value="waddington">RAF Waddington (EGXW)</option>
+      <option value="marham">RAF Marham (EGYM)</option>
+      <option value="odiham">RAF Odiham (EGVO)</option>
+      <option value="benson">RAF Benson (EGUB)</option>
+      <option value="valley">RAF Valley (EGOV)</option>
+      <option value="northolt">RAF Northolt (EGWU)</option>
+    </select>
+  </div>
+
   <div id="hud-controls" class="overlay-panel">
     <button id="btn-chase" class="active">Chase Cam</button>
-    <button id="btn-tower">Tower View</button>
+    <button id="btn-cockpit">Cockpit View</button>
+    <button id="btn-tower">Airfield View</button>
     <button id="btn-free">Free Orbit</button>
   </div>
 
   <script>
-    // -------------------------------------------------------------
-    // 1. Viewer Setup without Cesium Ion Dependency
-    // -------------------------------------------------------------
-    // OpenStreetMap imagery requires zero API tokens
-    const osmProvider = new Cesium.UrlTemplateImageryProvider({
-      url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-      subdomains: ["a", "b", "c"],
-      maximumLevel: 19
-    });
+    const esriLayer = Cesium.ImageryLayer.fromProviderAsync(
+      Cesium.ArcGisMapServerImageryProvider.fromUrl(
+        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
+        { enablePickFeatures: false }
+      )
+    );
 
     const viewer = new Cesium.Viewer("cesiumContainer", {
-      imageryProvider: osmProvider,
+      baseLayer: esriLayer,
       baseLayerPicker: false,
       geocoder: false,
       homeButton: false,
@@ -80,12 +180,27 @@
       navigationHelpButton: false,
       animation: true,
       timeline: true,
-      shouldAnimate: true
+      shouldAnimate: true,
+      creditContainer: document.createElement("div") // Redirect and suppress credit DOM injection
     });
 
-    // -------------------------------------------------------------
-    // 2. Timeline Configuration
-    // -------------------------------------------------------------
+    const airfields = {
+      heathrow:     { name: "London Heathrow", lat: 51.4774, lon: -0.4580, heading: 270, altMeters: 35 },
+      coningsby:    { name: "RAF Coningsby",   lat: 53.0908, lon: -0.1645, heading: 250, altMeters: 8 },
+      lossiemouth:  { name: "RAF Lossiemouth", lat: 57.7050, lon: -3.3406, heading: 230, altMeters: 10 },
+      brize:        { name: "RAF Brize Norton",lat: 51.7475, lon: -1.5833, heading: 260, altMeters: 88 },
+      waddington:   { name: "RAF Waddington",  lat: 53.1656, lon: -0.5364, heading: 200, altMeters: 68 },
+      marham:       { name: "RAF Marham",      lat: 52.6483, lon:  0.5508, heading: 240, altMeters: 39 },
+      odiham:       { name: "RAF Odiham",      lat: 51.2425, lon: -0.9439, heading: 280, altMeters: 120 },
+      benson:       { name: "RAF Benson",      lat: 51.6164, lon: -1.0875, heading: 240, altMeters: 71 },
+      valley:       { name: "RAF Valley",      lat: 53.2450, lon: -4.5383, heading: 310, altMeters: 11 },
+      northolt:     { name: "RAF Northolt",    lat: 51.4775, lon: -0.4430, heading: 250, altMeters: 38 }
+    };
+
+    let aircraftEntity = null;
+    let positionProperty = null;
+    let cameraMode = "chase"; // Modes: 'chase', 'cockpit', 'tower', 'free'
+
     const startIso = "2026-09-11T12:00:00Z";
     const startTime = Cesium.JulianDate.fromIso8601(startIso);
     const duration = 120;
@@ -98,93 +213,127 @@
     viewer.clock.multiplier = 1.0;
     viewer.timeline.zoomTo(startTime, stopTime);
 
-    // -------------------------------------------------------------
-    // 3. Heathrow Flight Path Interpolation
-    // -------------------------------------------------------------
-    const waypoints = [
-      { s: 0,   lon: -0.2200, lat: 51.4795, alt: 900 },
-      { s: 30,  lon: -0.2950, lat: 51.4788, alt: 650 },
-      { s: 60,  lon: -0.3700, lat: 51.4780, alt: 400 },
-      { s: 90,  lon: -0.4200, lat: 51.4776, alt: 150 },
-      { s: 110, lon: -0.4430, lat: 51.4775, alt: 35 },
-      { s: 120, lon: -0.4580, lat: 51.4774, alt: 35 }
-    ];
+    function calculateDestination(lat, lon, bearingDeg, distanceMeters) {
+      const R = 6371000;
+      const rad = Math.PI / 180;
+      const rLat = lat * rad;
+      const rLon = lon * rad;
+      const rBearing = bearingDeg * rad;
+      const dR = distanceMeters / R;
 
-    const positionProperty = new Cesium.SampledPositionProperty();
-    positionProperty.setInterpolationOptions({
-      interpolationDegree: 2,
-      interpolationAlgorithm: Cesium.HermitePolynomialApproximation
-    });
+      const nLat = Math.asin(Math.sin(rLat) * Math.cos(dR) + Math.cos(rLat) * Math.sin(dR) * Math.cos(rBearing));
+      const nLon = rLon + Math.atan2(Math.sin(rBearing) * Math.sin(dR) * Math.cos(rLat), Math.cos(dR) - Math.sin(rLat) * Math.sin(nLat));
 
-    waypoints.forEach(wp => {
-      const time = Cesium.JulianDate.addSeconds(startTime, wp.s, new Cesium.JulianDate());
-      const position = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.alt);
-      positionProperty.addSample(time, position);
-    });
+      return { lat: nLat / rad, lon: nLon / rad };
+    }
 
-    // -------------------------------------------------------------
-    // 4. Aircraft & Fallback Visual Marker
-    // -------------------------------------------------------------
-    const aircraftEntity = viewer.entities.add({
-      availability: new Cesium.TimeIntervalCollection([
-        new Cesium.TimeInterval({ start: startTime, stop: stopTime })
-      ]),
-      position: positionProperty,
-      orientation: new Cesium.VelocityOrientationProperty(positionProperty),
-      // 3D Model
-      model: {
-        uri: "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumAir/Cesium_Air.glb",
-        minimumPixelSize: 64,
-        maximumScale: 1000
-      },
-      // Fallback point marker to guarantee visibility if remote GLB fails to fetch
-      point: {
-        pixelSize: 10,
-        color: Cesium.Color.RED,
-        outlineColor: Cesium.Color.WHITE,
-        outlineWidth: 2
-      },
-      path: {
-        resolution: 1,
-        material: new Cesium.PolylineGlowMaterialProperty({
-          glowPower: 0.25,
-          color: Cesium.Color.fromCssColorString("#38bdf8")
-        }),
-        width: 3,
-        leadTime: 0,
-        trailTime: 120
+    function loadAirfield(key) {
+      const af = airfields[key];
+      document.getElementById("hud-station-title").textContent = `${af.name} Telemetry`;
+
+      const totalDistanceMeters = 15 * 1609.34;
+      const reciprocalHeading = (af.heading + 180) % 360;
+
+      const rawWaypoints = [
+        { s: 0,   dist: totalDistanceMeters, alt: 4500 },
+        { s: 30,  dist: totalDistanceMeters * 0.75, alt: 3400 },
+        { s: 60,  dist: totalDistanceMeters * 0.50, alt: 2200 },
+        { s: 90,  dist: totalDistanceMeters * 0.25, alt: 1100 },
+        { s: 110, dist: totalDistanceMeters * 0.05, alt: af.altMeters + 50 },
+        { s: 120, dist: 0, alt: af.altMeters }
+      ];
+
+      const waypoints = rawWaypoints.map(wp => {
+        const coords = calculateDestination(af.lat, af.lon, reciprocalHeading, wp.dist);
+        return { s: wp.s, lon: coords.lon, lat: coords.lat, alt: wp.alt };
+      });
+
+      positionProperty = new Cesium.SampledPositionProperty();
+      positionProperty.setInterpolationOptions({
+        interpolationDegree: 2,
+        interpolationAlgorithm: Cesium.HermitePolynomialApproximation
+      });
+
+      waypoints.forEach(wp => {
+        const time = Cesium.JulianDate.addSeconds(startTime, wp.s, new Cesium.JulianDate());
+        const pos = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.alt);
+        positionProperty.addSample(time, pos);
+      });
+
+      if (aircraftEntity) {
+        viewer.entities.remove(aircraftEntity);
       }
-    });
 
-    // Track entity
+      aircraftEntity = viewer.entities.add({
+        availability: new Cesium.TimeIntervalCollection([
+          new Cesium.TimeInterval({ start: startTime, stop: stopTime })
+        ]),
+        position: positionProperty,
+        orientation: new Cesium.VelocityOrientationProperty(positionProperty),
+        model: {
+          uri: "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumAir/Cesium_Air.glb",
+          minimumPixelSize: 64,
+          maximumScale: 1000
+        },
+        path: {
+          resolution: 1,
+          material: new Cesium.PolylineGlowMaterialProperty({
+            glowPower: 0.25,
+            color: Cesium.Color.fromCssColorString("#38bdf8")
+          }),
+          width: 3,
+          leadTime: 0,
+          trailTime: 120
+        }
+      });
+
+      if (cameraMode === "chase") {
+        viewer.trackedEntity = aircraftEntity;
+      }
+    }
+
+    loadAirfield("heathrow");
     viewer.trackedEntity = aircraftEntity;
 
-    // -------------------------------------------------------------
-    // 5. Controls
-    // -------------------------------------------------------------
+    document.getElementById("airfieldSelect").onchange = (e) => {
+      loadAirfield(e.target.value);
+    };
+
     const btnChase = document.getElementById("btn-chase");
+    const btnCockpit = document.getElementById("btn-cockpit");
     const btnTower = document.getElementById("btn-tower");
     const btnFree = document.getElementById("btn-free");
-    const modeButtons = [btnChase, btnTower, btnFree];
+    const modeButtons = [btnChase, btnCockpit, btnTower, btnFree];
+    const cockpitOverlay = document.getElementById("cockpit-hud-overlay");
 
-    function setActiveBtn(activeBtn) {
+    function setActiveMode(newMode, activeBtn) {
+      cameraMode = newMode;
       modeButtons.forEach(b => b.classList.remove("active"));
       activeBtn.classList.add("active");
+      cockpitOverlay.style.display = (cameraMode === "cockpit") ? "block" : "none";
+      viewer.camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
     }
 
     btnChase.onclick = () => {
-      setActiveBtn(btnChase);
+      setActiveMode("chase", btnChase);
       viewer.trackedEntity = aircraftEntity;
     };
 
-    btnTower.onclick = () => {
-      setActiveBtn(btnTower);
+    btnCockpit.onclick = () => {
+      setActiveMode("cockpit", btnCockpit);
       viewer.trackedEntity = undefined;
+    };
+
+    btnTower.onclick = () => {
+      setActiveMode("tower", btnTower);
+      viewer.trackedEntity = undefined;
+      const selectedKey = document.getElementById("airfieldSelect").value;
+      const af = airfields[selectedKey];
       viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(-0.4505, 51.4725, 120),
+        destination: Cesium.Cartesian3.fromDegrees(af.lon, af.lat, af.altMeters + 150),
         orientation: {
-          heading: Cesium.Math.toRadians(70),
-          pitch: Cesium.Math.toRadians(2),
+          heading: Cesium.Math.toRadians(af.heading),
+          pitch: Cesium.Math.toRadians(-5),
           roll: 0
         },
         duration: 1.5
@@ -192,18 +341,25 @@
     };
 
     btnFree.onclick = () => {
-      setActiveBtn(btnFree);
+      setActiveMode("free", btnFree);
       viewer.trackedEntity = undefined;
     };
 
-    // -------------------------------------------------------------
-    // 6. HUD Telemetry
-    // -------------------------------------------------------------
     const hudAlt = document.getElementById("hud-alt");
     const hudSpeed = document.getElementById("hud-speed");
     const hudCoords = document.getElementById("hud-coords");
+    const hudCockpitHdg = document.getElementById("hud-cockpit-hdg");
+    const hudCockpitSpd = document.getElementById("hud-cockpit-spd");
+    const hudCockpitAlt = document.getElementById("hud-cockpit-alt");
+
+    const scratchVelocity = new Cesium.Cartesian3();
+    const scratchTransform = new Cesium.Matrix4();
+    const mountTransform = new Cesium.Matrix4();
+    // External forward mount: 12m ahead (past canopy/radome), 2.5m elevation above airframe
+    const externalNoseOffset = new Cesium.Cartesian3(0.0, 12.0, 2.5);
 
     viewer.scene.preRender.addEventListener(() => {
+      if (!positionProperty) return;
       const currentTime = viewer.clock.currentTime;
       const currentPos = positionProperty.getValue(currentTime);
 
@@ -215,13 +371,50 @@
 
         hudAlt.textContent = `${altFt.toLocaleString()} ft`;
         hudCoords.textContent = `${lat.toFixed(4)}°N, ${Math.abs(lon).toFixed(4)}°W`;
+        hudCockpitAlt.textContent = `${altFt}`;
 
-        const nextTime = Cesium.JulianDate.addSeconds(currentTime, 1, new Cesium.JulianDate());
+        const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.25, new Cesium.JulianDate());
         const nextPos = positionProperty.getValue(nextTime);
+
         if (nextPos) {
+          Cesium.Cartesian3.subtract(nextPos, currentPos, scratchVelocity);
+          Cesium.Cartesian3.normalize(scratchVelocity, scratchVelocity);
+
           const distMeters = Cesium.Cartesian3.distance(currentPos, nextPos);
-          const kts = Math.round(distMeters * 1.94384);
+          const kts = Math.round((distMeters / 0.25) * 1.94384);
           hudSpeed.textContent = `${kts} kts`;
+          hudCockpitSpd.textContent = `${kts}`;
+
+          const enuMatrix = Cesium.Transforms.eastNorthUpToFixedFrame(currentPos);
+          const invEnu = Cesium.Matrix4.inverse(enuMatrix, new Cesium.Matrix4());
+          const localVelocity = Cesium.Matrix4.multiplyByPointAsVector(invEnu, scratchVelocity, new Cesium.Cartesian3());
+          let headingDeg = Cesium.Math.toDegrees(Math.atan2(localVelocity.x, localVelocity.y));
+          if (headingDeg < 0) headingDeg += 360;
+          hudCockpitHdg.textContent = `HDG: ${Math.round(headingDeg).toString().padStart(3, "0")}°`;
+
+          if (cameraMode === "cockpit") {
+            const rotMatrix = Cesium.Transforms.rotationMatrixFromPositionVelocity(
+              currentPos,
+              scratchVelocity,
+              Cesium.Ellipsoid.WGS84
+            );
+            Cesium.Matrix4.fromRotationTranslation(rotMatrix, currentPos, scratchTransform);
+
+            Cesium.Matrix4.multiplyByTranslation(
+              scratchTransform,
+              externalNoseOffset,
+              mountTransform
+            );
+
+            viewer.camera.lookAtTransform(
+              mountTransform,
+              new Cesium.HeadingPitchRange(
+                Cesium.Math.toRadians(90),
+                Cesium.Math.toRadians(-2.5),
+                0.1
+              )
+            );
+          }
         }
       }
     });
