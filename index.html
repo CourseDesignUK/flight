@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>UK Military Airfield 3D Flight Tracker</title>
+  <title>UK Civil Airport 3D Flight Tracker</title>
 
   <link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
   <script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"></script>
@@ -16,11 +16,13 @@
       color: #fff;
     }
 
-    /* Complete suppression of Cesium branding, credits, and default widgets */
+    /* Suppression of Cesium branding, credits, timeline, and animation widgets */
     .cesium-widget-credits,
     .cesium-credit-logoContainer,
     .cesium-credit-textContainer,
-    .cesium-credit-expand-link {
+    .cesium-credit-expand-link,
+    .cesium-viewer-timelineContainer,
+    .cesium-viewer-animationContainer {
       display: none !important;
       visibility: hidden !important;
       pointer-events: none !important;
@@ -28,15 +30,15 @@
 
     .overlay-panel {
       position: absolute;
-      background: rgba(13, 17, 23, 0.88);
+      background: rgba(13, 17, 23, 0.90);
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 6px;
       padding: 12px 16px;
       backdrop-filter: blur(10px);
       z-index: 100;
     }
-    #hud-telemetry { top: 20px; left: 20px; width: 310px; }
-    #hud-selector { top: 20px; right: 20px; width: 280px; }
+    #hud-telemetry { top: 20px; left: 20px; width: 320px; }
+    #hud-selector { top: 20px; right: 20px; width: 330px; }
     .hud-title {
       font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
       color: #38bdf8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -59,7 +61,37 @@
     }
     button.active { background: #0284c7; color: #fff; }
 
-    /* Tactical Cockpit / External Nose HUD Reticle */
+    /* Tactical Radio Comms Log Panel */
+    #hud-comms {
+      bottom: 85px;
+      left: 20px;
+      width: 480px;
+      height: 155px;
+      display: flex;
+      flex-direction: column;
+    }
+    #comms-log {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: monospace;
+      font-size: 11.5px;
+      line-height: 1.35;
+      padding-right: 4px;
+    }
+    .comm-line {
+      display: flex;
+      gap: 6px;
+      word-break: break-word;
+    }
+    .comm-time { color: #64748b; flex-shrink: 0; }
+    .comm-sender-atc { color: #38bdf8; font-weight: 700; flex-shrink: 0; }
+    .comm-sender-pilot { color: #4ade80; font-weight: 700; flex-shrink: 0; }
+    .comm-text { color: #f1f5f9; }
+
+    /* Cockpit HUD Reticle */
     #cockpit-hud-overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -81,7 +113,7 @@
 <body>
   <div id="cesiumContainer"></div>
 
-  <!-- External/Nose HUD Reticle Overlay -->
+  <!-- Cockpit HUD Reticle Overlay -->
   <div id="cockpit-hud-overlay">
     <svg class="hud-reticle-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <defs>
@@ -90,17 +122,14 @@
         </filter>
       </defs>
       <g filter="url(#hud-glow)">
-        <!-- Center Boresight Cross -->
         <path d="M 485 500 L 495 500 M 505 500 L 515 500 M 500 485 L 500 495 M 500 505 L 500 515" />
         <circle cx="500" cy="500" r="3" />
 
-        <!-- Velocity Vector Indicator (Flight Path Marker) -->
         <circle cx="500" cy="500" r="10" />
         <line x1="490" y1="500" x2="475" y2="500" />
         <line x1="510" y1="500" x2="525" y2="500" />
         <line x1="500" y1="490" x2="500" y2="475" />
 
-        <!-- Pitch Reference Lines -->
         <line x1="360" y1="500" x2="440" y2="500" stroke-dasharray="8 4" />
         <line x1="560" y1="500" x2="640" y2="500" stroke-dasharray="8 4" />
 
@@ -112,17 +141,14 @@
         <text x="390" y="564" fill="#00ff66" stroke="none">-5</text>
         <text x="600" y="564" fill="#00ff66" stroke="none">-5</text>
 
-        <!-- Heading Scale Tape (Top) -->
         <rect x="380" y="70" width="240" height="28" stroke="#00ff66" />
         <polygon points="500,103 495,110 505,110" fill="#00ff66" />
         <text id="hud-cockpit-hdg" x="500" y="90" text-anchor="middle" fill="#00ff66" stroke="none" font-weight="bold" font-size="14">HDG: ---°</text>
 
-        <!-- Airspeed Indicator (Left) -->
         <rect x="230" y="380" width="80" height="240" stroke="#00ff66" />
         <text x="270" y="405" text-anchor="middle" fill="#00ff66" stroke="none">GS KTS</text>
         <text id="hud-cockpit-spd" x="270" y="505" text-anchor="middle" fill="#00ff66" stroke="none" font-size="20" font-weight="bold">---</text>
 
-        <!-- Altitude Indicator (Right) -->
         <rect x="690" y="380" width="90" height="240" stroke="#00ff66" />
         <text x="735" y="405" text-anchor="middle" fill="#00ff66" stroke="none">ALT FT</text>
         <text id="hud-cockpit-alt" x="735" y="505" text-anchor="middle" fill="#00ff66" stroke="none" font-size="20" font-weight="bold">---</text>
@@ -131,35 +157,34 @@
   </div>
 
   <div id="hud-telemetry" class="overlay-panel">
-    <div class="hud-title" id="hud-station-title">RAF Station Telemetry</div>
-    <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">RRR-7598</span></div>
+    <div class="hud-title" id="hud-station-title">Airport Telemetry</div>
+    <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">SPEEDBIRD 412</span></div>
     <div class="data-row"><span class="data-label">Approach:</span><span class="data-val" id="hud-approach">15-mile Final</span></div>
     <div class="data-row"><span class="data-label">Altitude:</span><span class="data-val" id="hud-alt">-- ft</span></div>
     <div class="data-row"><span class="data-label">Ground Speed:</span><span class="data-val" id="hud-speed">-- kts</span></div>
-    <div class="data-row"><span class="data-label">Position:</span><span class="data-val" id="hud-coords">-- , --</span></div>
+    <div class="data-row"><span class="data-label">Touchdown Distance:</span><span class="data-val" id="hud-dist">-- NM</span></div>
+    <div class="data-row"><span class="data-label">Coordinates:</span><span class="data-val" id="hud-coords">-- , --</span></div>
   </div>
 
   <div id="hud-selector" class="overlay-panel">
-    <div class="hud-title">Select RAF Airfield</div>
-    <select id="airfieldSelect">
-      <option value="heathrow">London Heathrow (EGLL) [Default]</option>
-      <option value="coningsby">RAF Coningsby (EGXC)</option>
-      <option value="lossiemouth">RAF Lossiemouth (EGQS)</option>
-      <option value="brize">RAF Brize Norton (EGVN)</option>
-      <option value="waddington">RAF Waddington (EGXW)</option>
-      <option value="marham">RAF Marham (EGYM)</option>
-      <option value="odiham">RAF Odiham (EGVO)</option>
-      <option value="benson">RAF Benson (EGUB)</option>
-      <option value="valley">RAF Valley (EGOV)</option>
-      <option value="northolt">RAF Northolt (EGWU)</option>
-    </select>
+    <div class="hud-title">Select UK Commercial Airport</div>
+    <select id="airfieldSelect"></select>
+  </div>
+
+  <div id="hud-comms" class="overlay-panel">
+    <div class="hud-title" style="display:flex; justify-content:space-between;">
+      <span id="comms-title">VHF COM: APPROACH</span>
+      <span style="color:#22c55e;">LIVE TRANSCRIPT</span>
+    </div>
+    <div id="comms-log"></div>
   </div>
 
   <div id="hud-controls" class="overlay-panel">
     <button id="btn-chase" class="active">Chase Cam</button>
     <button id="btn-cockpit">Cockpit View</button>
-    <button id="btn-tower">Airfield View</button>
+    <button id="btn-tower">Tower View</button>
     <button id="btn-free">Free Orbit</button>
+    <button id="btn-lighting">Night Mode</button>
   </div>
 
   <script>
@@ -178,31 +203,121 @@
       infoBox: false,
       selectionIndicator: false,
       navigationHelpButton: false,
-      animation: true,
-      timeline: true,
+      animation: false,
+      timeline: false,
       shouldAnimate: true,
-      creditContainer: document.createElement("div") // Redirect and suppress credit DOM injection
+      creditContainer: document.createElement("div")
     });
 
-    const airfields = {
-      heathrow:     { name: "London Heathrow", lat: 51.4774, lon: -0.4580, heading: 270, altMeters: 35 },
-      coningsby:    { name: "RAF Coningsby",   lat: 53.0908, lon: -0.1645, heading: 250, altMeters: 8 },
-      lossiemouth:  { name: "RAF Lossiemouth", lat: 57.7050, lon: -3.3406, heading: 230, altMeters: 10 },
-      brize:        { name: "RAF Brize Norton",lat: 51.7475, lon: -1.5833, heading: 260, altMeters: 88 },
-      waddington:   { name: "RAF Waddington",  lat: 53.1656, lon: -0.5364, heading: 200, altMeters: 68 },
-      marham:       { name: "RAF Marham",      lat: 52.6483, lon:  0.5508, heading: 240, altMeters: 39 },
-      odiham:       { name: "RAF Odiham",      lat: 51.2425, lon: -0.9439, heading: 280, altMeters: 120 },
-      benson:       { name: "RAF Benson",      lat: 51.6164, lon: -1.0875, heading: 240, altMeters: 71 },
-      valley:       { name: "RAF Valley",      lat: 53.2450, lon: -4.5383, heading: 310, altMeters: 11 },
-      northolt:     { name: "RAF Northolt",    lat: 51.4775, lon: -0.4430, heading: 250, altMeters: 38 }
+    const airports = {
+      egll: { name: "London Heathrow",      icao: "EGLL", lat: 51.4774, lon: -0.4580, heading: 270, rwy: "27R", atcName: "Heathrow Director", twrName: "Heathrow Tower", altMeters: 25, appFreq: "119.725", twrFreq: "118.500" },
+      egkk: { name: "London Gatwick",       icao: "EGKK", lat: 51.1537, lon: -0.1821, heading: 260, rwy: "26L", atcName: "Gatwick Director",  twrName: "Gatwick Tower",  altMeters: 62, appFreq: "126.825", twrFreq: "124.225" },
+      egss: { name: "London Stansted",      icao: "EGSS", lat: 51.8860, lon:  0.2389, heading: 220, rwy: "22",  atcName: "Stansted Radar",    twrName: "Stansted Tower", altMeters: 106, appFreq: "120.625", twrFreq: "123.800" },
+      eggw: { name: "London Luton",         icao: "EGGW", lat: 51.8747, lon: -0.3683, heading: 260, rwy: "26",  atcName: "Luton Radar",       twrName: "Luton Tower",    altMeters: 160, appFreq: "129.550", twrFreq: "132.550" },
+      eglc: { name: "London City",          icao: "EGLC", lat: 51.5053, lon:  0.0553, heading: 270, rwy: "27",  atcName: "Thames Radar",      twrName: "City Tower",     altMeters: 6,   appFreq: "132.700", twrFreq: "118.075" },
+      egcc: { name: "Manchester",           icao: "EGCC", lat: 53.3537, lon: -2.2750, heading: 230, rwy: "23R", atcName: "Manchester Radar", twrName: "Manchester Tower",altMeters: 78, appFreq: "118.575", twrFreq: "118.625" },
+      egbb: { name: "Birmingham",           icao: "EGBB", lat: 52.4539, lon: -1.7480, heading: 330, rwy: "33",  atcName: "Birmingham Radar", twrName: "Birmingham Tower",altMeters: 100, appFreq: "131.000", twrFreq: "118.300" },
+      egph: { name: "Edinburgh",            icao: "EGPH", lat: 55.9500, lon: -3.3725, heading: 240, rwy: "24",  atcName: "Edinburgh Radar",  twrName: "Edinburgh Tower",altMeters: 41, appFreq: "121.200", twrFreq: "118.700" },
+      egpf: { name: "Glasgow",              icao: "EGPF", lat: 55.8719, lon: -4.4331, heading: 230, rwy: "23",  atcName: "Glasgow Radar",    twrName: "Glasgow Tower",  altMeters: 8,   appFreq: "119.100", twrFreq: "118.800" },
+      eggd: { name: "Bristol",              icao: "EGGD", lat: 51.3827, lon: -2.7191, heading: 270, rwy: "27",  atcName: "Bristol Radar",    twrName: "Bristol Tower",  altMeters: 190, appFreq: "125.650", twrFreq: "133.850" },
+      egnt: { name: "Newcastle",            icao: "EGNT", lat: 55.0375, lon: -1.6917, heading: 250, rwy: "25",  atcName: "Newcastle Radar",  twrName: "Newcastle Tower",altMeters: 81, appFreq: "124.375", twrFreq: "119.700" },
+      eggp: { name: "Liverpool John Lennon",icao: "EGGP", lat: 53.3336, lon: -2.8497, heading: 270, rwy: "27",  atcName: "Liverpool Radar",  twrName: "Liverpool Tower",altMeters: 25, appFreq: "119.850", twrFreq: "126.350" },
+      egnm: { name: "Leeds Bradford",       icao: "EGNM", lat: 53.8659, lon: -1.6606, heading: 320, rwy: "32",  atcName: "Leeds Radar",      twrName: "Leeds Tower",    altMeters: 208, appFreq: "134.575", twrFreq: "120.300" },
+      egnx: { name: "East Midlands",        icao: "EGNX", lat: 52.8311, lon: -1.3281, heading: 270, rwy: "27",  atcName: "East Midlands Radar", twrName: "Tower",       altMeters: 93,  appFreq: "134.175", twrFreq: "124.000" },
+      egaa: { name: "Belfast International",icao: "EGAA", lat: 54.6575, lon: -6.2158, heading: 250, rwy: "25",  atcName: "Belfast Radar",    twrName: "Aldergrove Tower",altMeters: 82, appFreq: "128.500", twrFreq: "118.300" },
+      egac: { name: "George Best Belfast City",icao: "EGAC", lat: 54.6181, lon: -5.8725, heading: 220, rwy: "22", atcName: "City Approach",  twrName: "City Tower",     altMeters: 5,   appFreq: "130.850", twrFreq: "122.825" },
+      egpd: { name: "Aberdeen",             icao: "EGPD", lat: 57.2019, lon: -2.1978, heading: 340, rwy: "34",  atcName: "Aberdeen Radar",   twrName: "Aberdeen Tower", altMeters: 66, appFreq: "119.050", twrFreq: "118.100" },
+      egff: { name: "Cardiff",              icao: "EGFF", lat: 51.3967, lon: -3.3433, heading: 300, rwy: "30",  atcName: "Cardiff Radar",    twrName: "Cardiff Tower",  altMeters: 67, appFreq: "119.150", twrFreq: "133.100" },
+      egte: { name: "Exeter",               icao: "EGTE", lat: 50.7344, lon: -3.4139, heading: 260, rwy: "26",  atcName: "Exeter Approach",  twrName: "Exeter Tower",   altMeters: 31, appFreq: "128.975", twrFreq: "119.800" },
+      eghi: { name: "Southampton",          icao: "EGHI", lat: 50.9503, lon: -1.3568, heading: 200, rwy: "20",  atcName: "Southampton Radar",twrName: "Tower",          altMeters: 13, appFreq: "122.725", twrFreq: "118.200" },
+      eghh: { name: "Bournemouth",          icao: "EGHH", lat: 50.7800, lon: -1.8425, heading: 260, rwy: "26",  atcName: "Bournemouth Radar",twrName: "Tower",          altMeters: 12, appFreq: "119.475", twrFreq: "125.600" },
+      egsh: { name: "Norwich",              icao: "EGSH", lat: 52.6758, lon:  1.2828, heading: 270, rwy: "27",  atcName: "Norwich Radar",    twrName: "Norwich Tower",  altMeters: 36, appFreq: "119.350", twrFreq: "124.250" },
+      egpe: { name: "Inverness",            icao: "EGPE", lat: 57.5400, lon: -4.0475, heading: 230, rwy: "23",  atcName: "Inverness Approach",twrName: "Tower",         altMeters: 9,   appFreq: "122.600", twrFreq: "118.400" },
+      egsc: { name: "Cambridge City",       icao: "EGSC", lat: 52.2050, lon:  0.1750, heading: 230, rwy: "23",  atcName: "Cambridge Approach",twrName: "Tower",         altMeters: 15, appFreq: "120.900", twrFreq: "125.900" },
+      egns: { name: "Isle of Man (Ronaldsway)", icao: "EGNS", lat: 54.0833, lon: -4.6239, heading: 260, rwy: "26", atcName: "Isle of Man Approach", twrName: "Tower",    altMeters: 16, appFreq: "135.900", twrFreq: "118.900" },
+      egjb: { name: "Guernsey",             icao: "EGJB", lat: 49.4350, lon: -2.6003, heading: 270, rwy: "27",  atcName: "Guernsey Approach",twrName: "Guernsey Tower", altMeters: 102, appFreq: "128.650", twrFreq: "119.950" },
+      egjj: { name: "Jersey",               icao: "EGJJ", lat: 49.2078, lon: -2.1956, heading: 260, rwy: "26",  atcName: "Jersey Approach",  twrName: "Jersey Tower",   altMeters: 84, appFreq: "120.450", twrFreq: "119.450" }
     };
+
+    const selectElem = document.getElementById("airfieldSelect");
+    Object.entries(airports).forEach(([key, ap]) => {
+      const opt = document.createElement("option");
+      opt.value = key;
+      opt.textContent = `${ap.name} (${ap.icao})`;
+      selectElem.appendChild(opt);
+    });
 
     let aircraftEntity = null;
     let positionProperty = null;
-    let cameraMode = "chase"; // Modes: 'chase', 'cockpit', 'tower', 'free'
+    let cameraMode = "chase";
+    let radioScript = [];
+    let displayedCommIndices = new Set();
+    let currentAirportKey = "egll";
+    let isNight = false;
 
-    const startIso = "2026-09-11T12:00:00Z";
-    const startTime = Cesium.JulianDate.fromIso8601(startIso);
+    // Speech Synthesis Subsystem
+    let voices = [];
+    let audioUnlocked = false;
+
+    function initVoices() {
+      voices = window.speechSynthesis.getVoices();
+    }
+    initVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = initVoices;
+    }
+
+    function unlockAudio() {
+      if (!audioUnlocked) {
+        const silent = new SpeechSynthesisUtterance("");
+        window.speechSynthesis.speak(silent);
+        audioUnlocked = true;
+      }
+    }
+    window.addEventListener("click", unlockAudio, { once: true });
+    window.addEventListener("keydown", unlockAudio, { once: true });
+
+    function speakTransmission(text, sender) {
+      if (!("speechSynthesis" in window)) return;
+
+      const phoneticText = text
+        .replace(/QNH/gi, "Q-N-H")
+        .replace(/ILS/gi, "I-L-S")
+        .replace(/DME/gi, "D-M-E")
+        .replace(/BAW412/gi, "Speedbird 4 1 2")
+        .replace(/1013/gi, "1 0 1 3")
+        .replace(/1014/gi, "1 0 1 4")
+        .replace(/(\d{3})\.(\d{3})/g, "$1 point $2");
+
+      const utterance = new SpeechSynthesisUtterance(phoneticText);
+      utterance.lang = "en-GB";
+
+      if (sender === "atc") {
+        utterance.pitch = 0.85;
+        utterance.rate = 1.05;
+        const atcVoice = voices.find(v => v.lang.includes("en") && (v.name.includes("Male") || v.name.includes("George") || v.name.includes("Oliver") || v.name.includes("David")));
+        if (atcVoice) utterance.voice = atcVoice;
+      } else {
+        // Distinct Female Pilot Configuration
+        utterance.pitch = 1.25;
+        utterance.rate = 1.05;
+        const pilotVoice = voices.find(v => v.lang.includes("en") && (
+          v.name.includes("Female") ||
+          v.name.includes("Samantha") ||
+          v.name.includes("Victoria") ||
+          v.name.includes("Zira") ||
+          v.name.includes("Hazel") ||
+          v.name.includes("Susan") ||
+          v.name.includes("Karen") ||
+          v.name.includes("Catherine")
+        ));
+        if (pilotVoice) utterance.voice = pilotVoice;
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    const startTime = Cesium.JulianDate.fromIso8601("2026-06-21T12:00:00Z");
     const duration = 120;
     const stopTime = Cesium.JulianDate.addSeconds(startTime, duration, new Cesium.JulianDate());
 
@@ -211,7 +326,8 @@
     viewer.clock.currentTime = startTime.clone();
     viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
     viewer.clock.multiplier = 1.0;
-    viewer.timeline.zoomTo(startTime, stopTime);
+
+    viewer.scene.globe.enableLighting = true;
 
     function calculateDestination(lat, lon, bearingDeg, distanceMeters) {
       const R = 6371000;
@@ -227,25 +343,153 @@
       return { lat: nLat / rad, lon: nLon / rad };
     }
 
-    function loadAirfield(key) {
-      const af = airfields[key];
-      document.getElementById("hud-station-title").textContent = `${af.name} Telemetry`;
+    // ATC Dialogue giving exact rounded 100-ft altitude assignments
+    function generateCivilDialogue(ap) {
+      const fieldElevationFt = ap.altMeters * 3.28084;
+      const assignedAltFt = Math.round((3000 + fieldElevationFt) / 100) * 100;
+      const intAltFt = Math.round((3400 + fieldElevationFt) / 100) * 100;
+      const estAltFt = Math.round((2200 + fieldElevationFt) / 100) * 100;
+
+      return [
+        {
+          s: 2,
+          phase: "15-mile Final",
+          sender: "atc",
+          freq: ap.appFreq,
+          label: ap.atcName,
+          text: `Speedbird 412, ${ap.atcName}, radar contact 15 miles straight-in. Descend to altitude ${assignedAltFt} feet on QNH 1013. Cleared straight-in ILS Runway ${ap.rwy}.`
+        },
+        {
+          s: 8,
+          phase: "15-mile Final",
+          sender: "pilot",
+          freq: ap.appFreq,
+          label: "BAW412",
+          text: `Descend ${assignedAltFt} feet on 1013, cleared ILS Runway ${ap.rwy}, Speedbird 412.`
+        },
+        {
+          s: 31,
+          phase: "Glidepath Intercept",
+          sender: "pilot",
+          freq: ap.appFreq,
+          label: "BAW412",
+          text: `${ap.atcName}, Speedbird 412 descending through ${intAltFt} feet, localiser captured, glideslope alive.`
+        },
+        {
+          s: 37,
+          phase: "Glidepath Intercept",
+          sender: "atc",
+          freq: ap.appFreq,
+          label: ap.atcName,
+          text: `Speedbird 412, roger. Maintain 160 knots to 4 DME. Contact ${ap.twrName} on ${ap.twrFreq}.`
+        },
+        {
+          s: 43,
+          phase: "Glidepath Intercept",
+          sender: "pilot",
+          freq: ap.twrFreq,
+          label: "BAW412",
+          text: `160 to 4, over to Tower on ${ap.twrFreq}, good day. Speedbird 412.`
+        },
+        {
+          s: 62,
+          phase: "Established 8 DME",
+          sender: "pilot",
+          freq: ap.twrFreq,
+          label: "BAW412",
+          text: `${ap.twrName}, Speedbird 412 fully established Runway ${ap.rwy}, 8 miles out, descending through ${estAltFt} feet.`
+        },
+        {
+          s: 68,
+          phase: "Established 8 DME",
+          sender: "atc",
+          freq: ap.twrFreq,
+          label: ap.twrName,
+          text: `Speedbird 412, ${ap.twrName}, welcome. Continue approach Runway ${ap.rwy}, wind ${ap.heading - 10} degrees at 8 knots.`
+        },
+        {
+          s: 88,
+          phase: "Short Final 4 DME",
+          sender: "pilot",
+          freq: ap.twrFreq,
+          label: "BAW412",
+          text: `Speedbird 412, 4 miles, gear down and locked, flaps full, landing checks complete.`
+        },
+        {
+          s: 94,
+          phase: "Short Final 4 DME",
+          sender: "atc",
+          freq: ap.twrFreq,
+          label: ap.twrName,
+          text: `Speedbird 412, wind ${(ap.heading + 5) % 360} degrees at 9 knots, Runway ${ap.rwy} cleared to land.`
+        },
+        {
+          s: 99,
+          phase: "Short Final 4 DME",
+          sender: "pilot",
+          freq: ap.twrFreq,
+          label: "BAW412",
+          text: `Cleared to land Runway ${ap.rwy}, Speedbird 412.`
+        },
+        {
+          s: 110,
+          phase: "Threshold Crossing",
+          sender: "pilot",
+          freq: ap.twrFreq,
+          label: "BAW412",
+          text: `Passing threshold, 50... 30... 10... Retard.`
+        },
+        {
+          s: 115,
+          phase: "Touchdown & Rollout",
+          sender: "pilot",
+          freq: ap.twrFreq,
+          label: "BAW412",
+          text: `Touchdown. Thrust reversers green, spoilers deployed, manual braking.`
+        },
+        {
+          s: 119,
+          phase: "Vacating",
+          sender: "atc",
+          freq: ap.twrFreq,
+          label: ap.twrName,
+          text: `Speedbird 412, turn left first available rapid exit taxiway, contact Ground on 121.700.`
+        }
+      ];
+    }
+
+    function loadAirport(key) {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
+
+      currentAirportKey = key;
+      const ap = airports[key];
+      document.getElementById("hud-station-title").textContent = `${ap.name} Telemetry`;
+      document.getElementById("comms-title").textContent = `${ap.atcName.toUpperCase()} (${ap.appFreq})`;
+
+      viewer.clock.currentTime = startTime.clone();
+      radioScript = generateCivilDialogue(ap);
+      displayedCommIndices.clear();
+      document.getElementById("comms-log").innerHTML = "";
 
       const totalDistanceMeters = 15 * 1609.34;
-      const reciprocalHeading = (af.heading + 180) % 360;
+      const reciprocalHeading = (ap.heading + 180) % 360;
 
       const rawWaypoints = [
-        { s: 0,   dist: totalDistanceMeters, alt: 4500 },
-        { s: 30,  dist: totalDistanceMeters * 0.75, alt: 3400 },
-        { s: 60,  dist: totalDistanceMeters * 0.50, alt: 2200 },
-        { s: 90,  dist: totalDistanceMeters * 0.25, alt: 1100 },
-        { s: 110, dist: totalDistanceMeters * 0.05, alt: af.altMeters + 50 },
-        { s: 120, dist: 0, alt: af.altMeters }
+        { s: 0,   dist: totalDistanceMeters, alt: 4500 + (ap.altMeters * 3.28084) },
+        { s: 30,  dist: totalDistanceMeters * 0.75, alt: 3400 + (ap.altMeters * 3.28084) },
+        { s: 60,  dist: totalDistanceMeters * 0.50, alt: 2200 + (ap.altMeters * 3.28084) },
+        { s: 90,  dist: totalDistanceMeters * 0.25, alt: 1100 + (ap.altMeters * 3.28084) },
+        { s: 110, dist: totalDistanceMeters * 0.04, alt: (ap.altMeters * 3.28084) + 60 },
+        { s: 115, dist: 0, alt: (ap.altMeters * 3.28084) + 1 },
+        { s: 120, dist: -900, alt: (ap.altMeters * 3.28084) + 1 }
       ];
 
       const waypoints = rawWaypoints.map(wp => {
-        const coords = calculateDestination(af.lat, af.lon, reciprocalHeading, wp.dist);
-        return { s: wp.s, lon: coords.lon, lat: coords.lat, alt: wp.alt };
+        const bearing = wp.dist >= 0 ? reciprocalHeading : ap.heading;
+        const coords = calculateDestination(ap.lat, ap.lon, bearing, Math.abs(wp.dist));
+        return { s: wp.s, lon: coords.lon, lat: coords.lat, altMeters: wp.alt / 3.28084 };
       });
 
       positionProperty = new Cesium.SampledPositionProperty();
@@ -256,12 +500,13 @@
 
       waypoints.forEach(wp => {
         const time = Cesium.JulianDate.addSeconds(startTime, wp.s, new Cesium.JulianDate());
-        const pos = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.alt);
+        const pos = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.altMeters);
         positionProperty.addSample(time, pos);
       });
 
       if (aircraftEntity) {
         viewer.entities.remove(aircraftEntity);
+        aircraftEntity = null;
       }
 
       aircraftEntity = viewer.entities.add({
@@ -289,20 +534,35 @@
 
       if (cameraMode === "chase") {
         viewer.trackedEntity = aircraftEntity;
+      } else if (cameraMode === "tower") {
+        setTowerCamera();
       }
     }
 
-    loadAirfield("heathrow");
-    viewer.trackedEntity = aircraftEntity;
+    function setTowerCamera() {
+      const ap = airports[currentAirportKey];
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, ap.altMeters + 120),
+        orientation: {
+          heading: Cesium.Math.toRadians((ap.heading + 180) % 360),
+          pitch: Cesium.Math.toRadians(5),
+          roll: 0
+        },
+        duration: 1.0
+      });
+    }
 
-    document.getElementById("airfieldSelect").onchange = (e) => {
-      loadAirfield(e.target.value);
+    loadAirport("egll");
+
+    selectElem.onchange = (e) => {
+      loadAirport(e.target.value);
     };
 
     const btnChase = document.getElementById("btn-chase");
     const btnCockpit = document.getElementById("btn-cockpit");
     const btnTower = document.getElementById("btn-tower");
     const btnFree = document.getElementById("btn-free");
+    const btnLighting = document.getElementById("btn-lighting");
     const modeButtons = [btnChase, btnCockpit, btnTower, btnFree];
     const cockpitOverlay = document.getElementById("cockpit-hud-overlay");
 
@@ -327,17 +587,7 @@
     btnTower.onclick = () => {
       setActiveMode("tower", btnTower);
       viewer.trackedEntity = undefined;
-      const selectedKey = document.getElementById("airfieldSelect").value;
-      const af = airfields[selectedKey];
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(af.lon, af.lat, af.altMeters + 150),
-        orientation: {
-          heading: Cesium.Math.toRadians(af.heading),
-          pitch: Cesium.Math.toRadians(-5),
-          roll: 0
-        },
-        duration: 1.5
-      });
+      setTowerCamera();
     };
 
     btnFree.onclick = () => {
@@ -345,23 +595,83 @@
       viewer.trackedEntity = undefined;
     };
 
+    btnLighting.onclick = () => {
+      isNight = !isNight;
+      btnLighting.textContent = isNight ? "Day Mode" : "Night Mode";
+      if (isNight) {
+        viewer.scene.light = new Cesium.DirectionalLight({
+          direction: new Cesium.Cartesian3(0.1, 0.2, 0.95),
+          intensity: 0.1
+        });
+      } else {
+        viewer.scene.light = new Cesium.SunLight();
+      }
+    };
+
     const hudAlt = document.getElementById("hud-alt");
     const hudSpeed = document.getElementById("hud-speed");
     const hudCoords = document.getElementById("hud-coords");
+    const hudApproach = document.getElementById("hud-approach");
+    const hudDist = document.getElementById("hud-dist");
     const hudCockpitHdg = document.getElementById("hud-cockpit-hdg");
     const hudCockpitSpd = document.getElementById("hud-cockpit-spd");
     const hudCockpitAlt = document.getElementById("hud-cockpit-alt");
+    const commsLog = document.getElementById("comms-log");
+    const commsTitle = document.getElementById("comms-title");
 
     const scratchVelocity = new Cesium.Cartesian3();
     const scratchTransform = new Cesium.Matrix4();
     const mountTransform = new Cesium.Matrix4();
-    // External forward mount: 12m ahead (past canopy/radome), 2.5m elevation above airframe
     const externalNoseOffset = new Cesium.Cartesian3(0.0, 12.0, 2.5);
 
     viewer.scene.preRender.addEventListener(() => {
       if (!positionProperty) return;
       const currentTime = viewer.clock.currentTime;
       const currentPos = positionProperty.getValue(currentTime);
+      const elapsedSec = Cesium.JulianDate.secondsDifference(currentTime, startTime);
+      const ap = airports[currentAirportKey];
+
+      if (elapsedSec < 0.5 && displayedCommIndices.size > 0) {
+        displayedCommIndices.clear();
+        commsLog.innerHTML = "";
+        if (window.speechSynthesis) {
+          window.speechSynthesis.cancel();
+        }
+      }
+
+      radioScript.forEach((comm, index) => {
+        if (elapsedSec >= comm.s && !displayedCommIndices.has(index)) {
+          displayedCommIndices.add(index);
+          commsTitle.textContent = `${comm.label.toUpperCase()} (${comm.freq} MHz)`;
+          
+          const line = document.createElement("div");
+          line.className = "comm-line";
+          const timeMins = Math.floor(comm.s / 60).toString().padStart(2, "0");
+          const timeSecs = Math.floor(comm.s % 60).toString().padStart(2, "0");
+          const senderClass = comm.sender === "atc" ? "comm-sender-atc" : "comm-sender-pilot";
+          const senderLabel = comm.sender === "atc" ? "ATC:" : "BAW412:";
+
+          line.innerHTML = `<span class="comm-time">[+${timeMins}:${timeSecs}]</span><span class="${senderClass}">${senderLabel}</span><span class="comm-text">${comm.text}</span>`;
+          commsLog.appendChild(line);
+          commsLog.scrollTop = commsLog.scrollHeight;
+
+          speakTransmission(comm.text, comm.sender);
+        }
+      });
+
+      if (elapsedSec < 30) {
+        hudApproach.textContent = "15-mile Final";
+      } else if (elapsedSec < 60) {
+        hudApproach.textContent = "Glidepath Intercept";
+      } else if (elapsedSec < 85) {
+        hudApproach.textContent = "Established 8 DME";
+      } else if (elapsedSec < 110) {
+        hudApproach.textContent = "Short Final 4 DME";
+      } else if (elapsedSec < 115) {
+        hudApproach.textContent = "Threshold Crossing";
+      } else {
+        hudApproach.textContent = "Touchdown / Rollout";
+      }
 
       if (currentPos) {
         const cartographic = Cesium.Cartographic.fromCartesian(currentPos);
@@ -369,9 +679,14 @@
         const lat = Cesium.Math.toDegrees(cartographic.latitude);
         const altFt = Math.round(cartographic.height * 3.28084);
 
+        const thresholdCartesian = Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, ap.altMeters);
+        const distMeters = Cesium.Cartesian3.distance(currentPos, thresholdCartesian);
+        const distNM = (distMeters / 1852).toFixed(1);
+
         hudAlt.textContent = `${altFt.toLocaleString()} ft`;
         hudCoords.textContent = `${lat.toFixed(4)}°N, ${Math.abs(lon).toFixed(4)}°W`;
         hudCockpitAlt.textContent = `${altFt}`;
+        hudDist.textContent = `${distNM} NM`;
 
         const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.25, new Cesium.JulianDate());
         const nextPos = positionProperty.getValue(nextTime);
@@ -380,8 +695,8 @@
           Cesium.Cartesian3.subtract(nextPos, currentPos, scratchVelocity);
           Cesium.Cartesian3.normalize(scratchVelocity, scratchVelocity);
 
-          const distMeters = Cesium.Cartesian3.distance(currentPos, nextPos);
-          const kts = Math.round((distMeters / 0.25) * 1.94384);
+          const stepDistance = Cesium.Cartesian3.distance(currentPos, nextPos);
+          const kts = Math.round((stepDistance / 0.25) * 1.94384);
           hudSpeed.textContent = `${kts} kts`;
           hudCockpitSpd.textContent = `${kts}`;
 
