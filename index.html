@@ -38,6 +38,8 @@
     }
     #hud-telemetry { top: 20px; left: 20px; width: 320px; }
     #hud-selector { top: 20px; right: 20px; width: 330px; }
+    #hud-emergencies { top: 20px; left: 350px; width: 220px; }
+
     .hud-title {
       font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
       color: #38bdf8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -60,6 +62,9 @@
     }
     button.active { background: #0284c7; color: #fff; }
 
+    .btn-danger { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; width: 100%; margin-bottom: 6px; }
+    .btn-warning { background: #78350f; border-color: #f59e0b; color: #fcd34d; width: 100%; margin-bottom: 6px; }
+
     #hud-comms {
       bottom: 85px;
       left: 20px;
@@ -78,6 +83,7 @@
       font-size: 11.5px;
       line-height: 1.35;
       padding-right: 4px;
+      scroll-behavior: smooth;
     }
     .comm-line {
       display: flex;
@@ -148,11 +154,18 @@
   <div id="hud-telemetry" class="overlay-panel">
     <div class="hud-title" id="hud-station-title">Airport Telemetry</div>
     <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">SPEEDBIRD 3</span></div>
-    <div class="data-row"><span class="data-label">Approach:</span><span class="data-val" id="hud-approach">15-mile Final</span></div>
+    <div class="data-row"><span class="data-label">Phase:</span><span class="data-val" id="hud-approach">6-mile Final</span></div>
     <div class="data-row"><span class="data-label">Altitude:</span><span class="data-val" id="hud-alt">-- ft</span></div>
     <div class="data-row"><span class="data-label">Ground Speed:</span><span class="data-val" id="hud-speed">-- kts</span></div>
-    <div class="data-row"><span class="data-label">Touchdown Distance:</span><span class="data-val" id="hud-dist">-- NM</span></div>
+    <div class="data-row"><span class="data-label">Threshold Dist:</span><span class="data-val" id="hud-dist">-- NM</span></div>
     <div class="data-row"><span class="data-label">Coordinates:</span><span class="data-val" id="hud-coords">-- , --</span></div>
+  </div>
+
+  <div id="hud-emergencies" class="overlay-panel">
+    <div class="hud-title">Failures</div>
+    <button id="btn-em-fire" class="btn-danger">Engine Fire</button>
+    <button id="btn-em-fumes" class="btn-danger">Cockpit Fumes</button>
+    <button id="btn-em-gear" class="btn-warning">Stuck Gear</button>
   </div>
 
   <div id="hud-selector" class="overlay-panel">
@@ -235,6 +248,71 @@
       egjj: { name: "Jersey",               icao: "EGJJ", lat: 49.2078, lon: -2.1956, heading: 260, rwy: "26",  atcName: "Jersey Approach",  twrName: "Jersey Tower",   altMeters: 84, appFreq: "120.450", twrFreq: "119.450" }
     };
 
+    // Particle Systems for emergencies
+    const engineFireSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
+      image: 'https://sandcastle.cesium.com/SampleData/fire.png',
+      startColor: Cesium.Color.RED.withAlpha(0.9),
+      endColor: Cesium.Color.YELLOW.withAlpha(0.1),
+      startScale: 1.0,
+      endScale: 4.0,
+      minimumParticleLife: 0.5,
+      maximumParticleLife: 1.2,
+      minimumSpeed: 8.0,
+      maximumSpeed: 14.0,
+      imageSize: new Cesium.Cartesian2(5, 5),
+      emissionRate: 50.0,
+      emitter: new Cesium.ConeEmitter(Cesium.Math.toRadians(15.0)),
+      show: false
+    }));
+
+    const engineSmokeSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
+      image: 'https://sandcastle.cesium.com/SampleData/smoke.png',
+      startColor: Cesium.Color.DARKGRAY.withAlpha(0.8),
+      endColor: Cesium.Color.BLACK.withAlpha(0.0),
+      startScale: 2.0,
+      endScale: 10.0,
+      minimumParticleLife: 2.0,
+      maximumParticleLife: 4.0,
+      minimumSpeed: 6.0,
+      maximumSpeed: 12.0,
+      imageSize: new Cesium.Cartesian2(7, 7),
+      emissionRate: 40.0,
+      emitter: new Cesium.ConeEmitter(Cesium.Math.toRadians(15.0)),
+      show: false
+    }));
+
+    const cockpitSmokeSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
+      image: 'https://sandcastle.cesium.com/SampleData/smoke.png',
+      startColor: Cesium.Color.LIGHTGRAY.withAlpha(0.6),
+      endColor: Cesium.Color.WHITE.withAlpha(0.0),
+      startScale: 1.0,
+      endScale: 5.0,
+      minimumParticleLife: 1.0,
+      maximumParticleLife: 3.0,
+      minimumSpeed: 2.0,
+      maximumSpeed: 5.0,
+      imageSize: new Cesium.Cartesian2(4, 4),
+      emissionRate: 20.0,
+      emitter: new Cesium.SphereEmitter(0.5),
+      show: false
+    }));
+
+    const gearSparkSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
+      image: 'https://sandcastle.cesium.com/SampleData/fire.png',
+      startColor: Cesium.Color.YELLOW.withAlpha(1.0),
+      endColor: Cesium.Color.WHITE.withAlpha(0.0),
+      startScale: 0.5,
+      endScale: 0.1,
+      minimumParticleLife: 0.1,
+      maximumParticleLife: 0.3,
+      minimumSpeed: 15.0,
+      maximumSpeed: 25.0,
+      imageSize: new Cesium.Cartesian2(2, 2),
+      emissionRate: 150.0,
+      emitter: new Cesium.ConeEmitter(Cesium.Math.toRadians(45.0)),
+      show: false
+    }));
+
     const selectElem = document.getElementById("airfieldSelect");
     Object.entries(airports).forEach(([key, ap]) => {
       const opt = document.createElement("option");
@@ -250,7 +328,9 @@
     let displayedCommIndices = new Set();
     let currentAirportKey = "egll";
     let isNight = false;
+    let activeEmergency = 'none';
 
+    // Speech Synthesis initialization
     let voices = [];
     let audioUnlocked = false;
 
@@ -258,12 +338,12 @@
       voices = window.speechSynthesis.getVoices();
     }
     initVoices();
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+    if (window.speechSynthesis && window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = initVoices;
     }
 
     function unlockAudio() {
-      if (!audioUnlocked) {
+      if (!audioUnlocked && "speechSynthesis" in window) {
         const silent = new SpeechSynthesisUtterance("");
         window.speechSynthesis.speak(silent);
         audioUnlocked = true;
@@ -272,22 +352,51 @@
     window.addEventListener("click", unlockAudio, { once: true });
     window.addEventListener("keydown", unlockAudio, { once: true });
 
-    function speakTransmission(text, sender) {
-      if (!("speechSynthesis" in window)) return;
-
-      const phoneticText = text
+    function dispatchComm(comm, timeMins, timeSecs) {
+      const phoneticText = comm.text
+        .replace(/Runway (\d)(\d)([a-zA-Z]?)/gi, (match, d1, d2, lr) => {
+          let spoken = "Runway " + d1 + " " + d2;
+          if (lr && lr.toUpperCase() === 'L') spoken += " Left";
+          else if (lr && lr.toUpperCase() === 'R') spoken += " Right";
+          return spoken;
+        })
         .replace(/QNH/gi, "Q-N-H")
         .replace(/ILS/gi, "I-L-S")
         .replace(/DME/gi, "D-M-E")
         .replace(/BAW3/gi, "Speedbird 3")
         .replace(/1013/gi, "1 0 1 3")
         .replace(/1014/gi, "1 0 1 4")
-        .replace(/(\d{3})\.(\d{3})/g, "$1 point $2");
+        // Speak frequencies as separate digits with "decimal"
+        .replace(/(\d{3})\.(\d+)/g, (match, p1, p2) => {
+          let decimalPart = p2.replace(/0+$/, ''); // Strip trailing zeros
+          if (!decimalPart) decimalPart = '0'; // Handle exact decimals like .000
+          return p1.split('').join(' ') + ' decimal ' + decimalPart.split('').join(' ');
+        });
+
+      function updateUI() {
+        const commsTitle = document.getElementById("comms-title");
+        const commsLog = document.getElementById("comms-log");
+        
+        commsTitle.textContent = `${comm.label.toUpperCase()} (${comm.freq} MHz)`;
+        const line = document.createElement("div");
+        line.className = "comm-line";
+        const senderClass = comm.sender === "atc" ? "comm-sender-atc" : "comm-sender-pilot";
+        const senderLabel = comm.sender === "atc" ? "ATC:" : "BAW3:";
+        
+        line.innerHTML = `<span class="comm-time">[+${timeMins}:${timeSecs}]</span><span class="${senderClass}">${senderLabel}</span><span class="comm-text">${comm.text}</span>`;
+        commsLog.appendChild(line);
+        commsLog.scrollTop = commsLog.scrollHeight;
+      }
+
+      if (!("speechSynthesis" in window) || !window.speechSynthesis) {
+        updateUI();
+        return;
+      }
 
       const utterance = new SpeechSynthesisUtterance(phoneticText);
       utterance.lang = "en-GB";
 
-      if (sender === "atc") {
+      if (comm.sender === "atc") {
         utterance.pitch = 0.85;
         utterance.rate = 1.05;
         const atcVoice = voices.find(v => v.lang.includes("en") && (v.name.includes("Male") || v.name.includes("George") || v.name.includes("Oliver") || v.name.includes("David")));
@@ -308,11 +417,13 @@
         if (pilotVoice) utterance.voice = pilotVoice;
       }
 
+      utterance.onstart = updateUI;
+      utterance.onerror = updateUI;
       window.speechSynthesis.speak(utterance);
     }
 
     const startTime = Cesium.JulianDate.fromIso8601("2026-06-21T12:00:00Z");
-    const duration = 120;
+    const duration = 190;
     const stopTime = Cesium.JulianDate.addSeconds(startTime, duration, new Cesium.JulianDate());
 
     viewer.clock.startTime = startTime.clone();
@@ -333,26 +444,27 @@
       return { lat: nLat / rad, lon: nLon / rad };
     }
 
-    function generateCivilDialogue(ap) {
+    function generateNormalDialogue(ap) {
       const fieldElevationFt = ap.altMeters * 3.28084;
       const assignedAltFt = Math.round((3000 + fieldElevationFt) / 100) * 100;
-      const intAltFt = Math.round((3400 + fieldElevationFt) / 100) * 100;
-      const estAltFt = Math.round((2200 + fieldElevationFt) / 100) * 100;
+      const intAltFt = Math.round((2200 + fieldElevationFt) / 100) * 100;
 
+      // Accurately synchronized to the generated waypoints (touchdown at s: 120, stop at s: 170)
       return [
-        { s: 2, phase: "15-mile Final", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, ${ap.atcName}, radar contact 15 miles straight-in. Descend to altitude ${assignedAltFt} feet on QNH 1013. Cleared straight-in ILS Runway ${ap.rwy}.` },
-        { s: 8, phase: "15-mile Final", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Descend ${assignedAltFt} feet on 1013, cleared ILS Runway ${ap.rwy}, Speedbird 3.` },
-        { s: 31, phase: "Glidepath Intercept", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `${ap.atcName}, Speedbird 3 descending through ${intAltFt} feet, localiser captured, glideslope alive.` },
-        { s: 37, phase: "Glidepath Intercept", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, roger. Maintain 160 knots to 4 DME. Contact ${ap.twrName} on ${ap.twrFreq}.` },
-        { s: 43, phase: "Glidepath Intercept", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `160 to 4, over to Tower on ${ap.twrFreq}, good day. Speedbird 3.` },
-        { s: 62, phase: "Established 8 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `${ap.twrName}, Speedbird 3 fully established Runway ${ap.rwy}, 8 miles out, descending through ${estAltFt} feet.` },
-        { s: 68, phase: "Established 8 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, ${ap.twrName}, welcome. Continue approach Runway ${ap.rwy}, wind ${ap.heading - 10} degrees at 8 knots.` },
-        { s: 88, phase: "Short Final 4 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Speedbird 3, 4 miles, gear down and locked, flaps full, landing checks complete.` },
-        { s: 94, phase: "Short Final 4 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, wind ${(ap.heading + 5) % 360} degrees at 9 knots, Runway ${ap.rwy} cleared to land.` },
-        { s: 99, phase: "Short Final 4 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3.` },
-        { s: 110, phase: "Threshold Crossing", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Passing threshold, 50... 30... 10... Retard.` },
-        { s: 115, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Touchdown. Thrust reversers green, spoilers deployed, manual braking.` },
-        { s: 119, phase: "Vacating", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, turn left first available rapid exit taxiway, contact Ground on 121.700.` }
+        { s: 2, phase: "6-mile Final", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, ${ap.atcName}, radar contact 6 miles straight-in. Descend to altitude ${assignedAltFt} feet on QNH 1013.` },
+        { s: 10, phase: "6-mile Final", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Descend ${assignedAltFt} feet on 1013, cleared ILS Runway ${ap.rwy}, Speedbird 3.` },
+        { s: 25, phase: "Glidepath Intercept", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 descending through ${intAltFt} feet, localiser captured, glide slope alive.` },
+        { s: 32, phase: "Glidepath Intercept", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, roger. Maintain 150 knots to 4 DME. Contact ${ap.twrName} on ${ap.twrFreq}.` },
+        { s: 40, phase: "Glidepath Intercept", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `150 to 4, over to Tower on ${ap.twrFreq}, good day. Speedbird 3.` },
+        { s: 55, phase: "Established 4 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `${ap.twrName}, Speedbird 3 fully established Runway ${ap.rwy}, 4 miles out.` },
+        { s: 62, phase: "Established 4 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, ${ap.twrName}, welcome. Continue approach Runway ${ap.rwy}, wind ${ap.heading - 10} degrees at 8 knots.` },
+        { s: 80, phase: "Short Final 2 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Speedbird 3, 2 miles, gear down and locked, flaps full, landing checks complete.` },
+        { s: 88, phase: "Short Final 2 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, wind ${(ap.heading + 5) % 360} degrees at 9 knots, Runway ${ap.rwy} cleared to land.` },
+        { s: 96, phase: "Short Final 2 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3.` },
+        { s: 111, phase: "Threshold Crossing", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Passing threshold, 50... 30... 10... Retard.` },
+        { s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Touchdown.` },
+        { s: 145, phase: "Rollout", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, turn left at the end, contact Ground on 121.7.` },
+        { s: 153, phase: "Vacating", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Left at the end, over to Ground on 121.7, Speedbird 3.` }
       ];
     }
 
@@ -361,50 +473,55 @@
         window.speechSynthesis.cancel();
       }
 
+      activeEmergency = 'none';
       currentAirportKey = key;
       const ap = airports[key];
       document.getElementById("hud-station-title").textContent = `${ap.name} Telemetry`;
-      document.getElementById("comms-title").textContent = `${ap.atcName.toUpperCase()} (${ap.appFreq})`;
 
       viewer.clock.currentTime = startTime.clone();
-      radioScript = generateCivilDialogue(ap);
+      radioScript = generateNormalDialogue(ap);
       displayedCommIndices.clear();
       document.getElementById("comms-log").innerHTML = "";
 
-      const totalDistanceMeters = 15 * 1609.34;
       const reciprocalHeading = (ap.heading + 180) % 360;
+      const visualGroundZ = 2.0;
 
+      // Linear points simulating descent and gradual deceleration to an exact stop at s: 170
       const rawWaypoints = [
-        { s: 0,   dist: totalDistanceMeters, alt: 4500 + (ap.altMeters * 3.28084) },
-        { s: 30,  dist: totalDistanceMeters * 0.75, alt: 3400 + (ap.altMeters * 3.28084) },
-        { s: 60,  dist: totalDistanceMeters * 0.50, alt: 2200 + (ap.altMeters * 3.28084) },
-        { s: 90,  dist: totalDistanceMeters * 0.25, alt: 1100 + (ap.altMeters * 3.28084) },
-        { s: 110, dist: totalDistanceMeters * 0.04, alt: (ap.altMeters * 3.28084) + 60 },
-        { s: 115, dist: 0, alt: (ap.altMeters * 3.28084) + 1 },
-        { s: 120, dist: -900, alt: (ap.altMeters * 3.28084) + 1 }
+        { s: 0,   dist: 11075, z: visualGroundZ + 580 }, // 6.0 NM
+        { s: 30,  dist: 7535,  z: visualGroundZ + 387 }, // 4.0 NM
+        { s: 60,  dist: 4535,  z: visualGroundZ + 231 }, // 2.4 NM
+        { s: 90,  dist: 1925,  z: visualGroundZ + 97 },  // 1.0 NM
+        { s: 110, dist: 385,   z: visualGroundZ + 25 },  // 0.2 NM
+        { s: 115, dist: 0,     z: visualGroundZ + 15 },  // Threshold (~50 ft)
+        { s: 120, dist: -350,  z: visualGroundZ },       // Touchdown (matches s: 120 dialogue)
+        { s: 135, dist: -1100, z: visualGroundZ },       // Rollout fast
+        { s: 155, dist: -1700, z: visualGroundZ },       // Rollout slow
+        { s: 170, dist: -1850, z: visualGroundZ },       // Complete Stop
+        { s: 171, dist: -1850, z: visualGroundZ },       // Interpolation hold
+        { s: 190, dist: -1850, z: visualGroundZ }        // Remain stopped
       ];
 
       const waypoints = rawWaypoints.map(wp => {
         const bearing = wp.dist >= 0 ? reciprocalHeading : ap.heading;
         const coords = calculateDestination(ap.lat, ap.lon, bearing, Math.abs(wp.dist));
-        return { s: wp.s, lon: coords.lon, lat: coords.lat, altMeters: wp.alt / 3.28084 };
+        return { s: wp.s, lon: coords.lon, lat: coords.lat, z: wp.z };
       });
 
       positionProperty = new Cesium.SampledPositionProperty();
       positionProperty.setInterpolationOptions({
-        interpolationDegree: 2,
-        interpolationAlgorithm: Cesium.HermitePolynomialApproximation
+        interpolationDegree: 1,
+        interpolationAlgorithm: Cesium.LinearApproximation
       });
 
       waypoints.forEach(wp => {
         const time = Cesium.JulianDate.addSeconds(startTime, wp.s, new Cesium.JulianDate());
-        const pos = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.altMeters);
+        const pos = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.z);
         positionProperty.addSample(time, pos);
       });
 
       if (aircraftEntity) {
         viewer.entities.remove(aircraftEntity);
-        aircraftEntity = null;
       }
 
       aircraftEntity = viewer.entities.add({
@@ -440,7 +557,7 @@
     function setTowerCamera() {
       const ap = airports[currentAirportKey];
       viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, ap.altMeters + 120),
+        destination: Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, 120),
         orientation: {
           heading: Cesium.Math.toRadians((ap.heading + 180) % 360),
           pitch: Cesium.Math.toRadians(5),
@@ -450,9 +567,59 @@
       });
     }
 
+    function triggerEmergency(type) {
+      if (activeEmergency !== 'none') return;
+      activeEmergency = type;
+      
+      const currentTime = viewer.clock.currentTime;
+      const elapsedSec = Cesium.JulianDate.secondsDifference(currentTime, startTime);
+      const ap = airports[currentAirportKey];
+
+      radioScript = radioScript.filter(comm => comm.s <= elapsedSec);
+      
+      if (window.speechSynthesis) window.speechSynthesis.cancel(); 
+
+      const injectTime = Math.max(Math.floor(elapsedSec) + 1, 10);
+
+      // Dialogue triggers are bound strictly to the telemetry (Touchdown is s: 120, Complete Stop is s: 170)
+      if (type === 'fire') {
+        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, engine fire number two, severe loss of power. Requesting immediate priority landing Runway ${ap.rwy}.` });
+        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Number one for Runway ${ap.rwy}, cleared to land. Fire rescue deployed.` });
+        radioScript.push({ s: injectTime + 18, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3. Running checklists.` });
+        radioScript.push({ s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Touchdown. Maximum braking. Stopping on the runway.` });
+        radioScript.push({ s: 171, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 has stopped. Initiating immediate evacuation on the runway.` });
+      } else if (type === 'fumes') {
+        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, acrid smoke and fumes in the cockpit. Crew donning oxygen masks.` });
+        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Cleared to land Runway ${ap.rwy}. Emergency services standing by.` });
+        radioScript.push({ s: injectTime + 18, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3.` });
+        radioScript.push({ s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3, touchdown. Braking hard.` });
+        radioScript.push({ s: 171, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 stopped. Evacuating via slides.` });
+      } else if (type === 'gear') {
+        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, unsafe gear indication. Nose gear shows not locked.` });
+        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Crash rescue alerted. Cleared to land Runway ${ap.rwy}.` });
+        radioScript.push({ s: 112, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Cleared to land, Speedbird 3. Bracing for impact on touchdown.` });
+        radioScript.push({ s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Touchdown. Holding nose off as long as possible.` });
+        radioScript.push({ s: 135, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Nose is down. Scraping.` });
+        radioScript.push({ s: 171, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 stopped. Commencing evacuation.` });
+      }
+
+      radioScript.sort((a, b) => a.s - b.s);
+      
+      document.getElementById("btn-em-fire").disabled = true;
+      document.getElementById("btn-em-fumes").disabled = true;
+      document.getElementById("btn-em-gear").disabled = true;
+    }
+
+    document.getElementById("btn-em-fire").onclick = () => triggerEmergency('fire');
+    document.getElementById("btn-em-fumes").onclick = () => triggerEmergency('fumes');
+    document.getElementById("btn-em-gear").onclick = () => triggerEmergency('gear');
+
     loadAirport("egll");
 
     selectElem.onchange = (e) => {
+      document.getElementById("btn-em-fire").disabled = false;
+      document.getElementById("btn-em-fumes").disabled = false;
+      document.getElementById("btn-em-gear").disabled = false;
       loadAirport(e.target.value);
     };
 
@@ -536,13 +703,13 @@
     const hudCockpitHdg = document.getElementById("hud-cockpit-hdg");
     const hudCockpitSpd = document.getElementById("hud-cockpit-spd");
     const hudCockpitAlt = document.getElementById("hud-cockpit-alt");
-    const commsLog = document.getElementById("comms-log");
-    const commsTitle = document.getElementById("comms-title");
 
     const scratchVelocity = new Cesium.Cartesian3();
     const scratchTransform = new Cesium.Matrix4();
     const mountTransform = new Cesium.Matrix4();
     const externalNoseOffset = new Cesium.Cartesian3(0.0, 12.0, 2.5);
+    let lastValidVelocity = new Cesium.Cartesian3(0, 1, 0);
+    const visualGroundZ = 2.0;
 
     viewer.scene.preRender.addEventListener(() => {
       if (!positionProperty) return;
@@ -553,70 +720,74 @@
 
       if (elapsedSec < 0.5 && displayedCommIndices.size > 0) {
         displayedCommIndices.clear();
-        commsLog.innerHTML = "";
-        if (window.speechSynthesis) {
-          window.speechSynthesis.cancel();
-        }
+        document.getElementById("comms-log").innerHTML = "";
+        if (window.speechSynthesis) window.speechSynthesis.cancel();
+        activeEmergency = 'none';
+        document.getElementById("btn-em-fire").disabled = false;
+        document.getElementById("btn-em-fumes").disabled = false;
+        document.getElementById("btn-em-gear").disabled = false;
       }
 
       radioScript.forEach((comm, index) => {
         if (elapsedSec >= comm.s && !displayedCommIndices.has(index)) {
           displayedCommIndices.add(index);
-          commsTitle.textContent = `${comm.label.toUpperCase()} (${comm.freq} MHz)`;
-          
-          const line = document.createElement("div");
-          line.className = "comm-line";
           const timeMins = Math.floor(comm.s / 60).toString().padStart(2, "0");
           const timeSecs = Math.floor(comm.s % 60).toString().padStart(2, "0");
-          const senderClass = comm.sender === "atc" ? "comm-sender-atc" : "comm-sender-pilot";
-          const senderLabel = comm.sender === "atc" ? "ATC:" : "BAW3:";
-
-          line.innerHTML = `<span class="comm-time">[+${timeMins}:${timeSecs}]</span><span class="${senderClass}">${senderLabel}</span><span class="comm-text">${comm.text}</span>`;
-          commsLog.appendChild(line);
-          commsLog.scrollTop = commsLog.scrollHeight;
-
-          speakTransmission(comm.text, comm.sender);
+          dispatchComm(comm, timeMins, timeSecs);
         }
       });
 
-      if (elapsedSec < 30) {
-        hudApproach.textContent = "15-mile Final";
-      } else if (elapsedSec < 60) {
-        hudApproach.textContent = "Glidepath Intercept";
-      } else if (elapsedSec < 85) {
-        hudApproach.textContent = "Established 8 DME";
-      } else if (elapsedSec < 110) {
-        hudApproach.textContent = "Short Final 4 DME";
-      } else if (elapsedSec < 115) {
-        hudApproach.textContent = "Threshold Crossing";
+      if (activeEmergency !== 'none') {
+        hudApproach.style.color = "#ef4444";
+        if (elapsedSec < 110) hudApproach.textContent = "EMERGENCY APPROACH";
+        else if (elapsedSec < 115) hudApproach.textContent = "EMERGENCY SHORT FINAL";
+        else if (elapsedSec < 170) hudApproach.textContent = "EMERGENCY ROLLOUT";
+        else hudApproach.textContent = "EMERGENCY EVACUATION";
       } else {
-        hudApproach.textContent = "Touchdown / Rollout";
+        hudApproach.style.color = "#f8fafc";
+        if (elapsedSec < 30) hudApproach.textContent = "6-mile Final";
+        else if (elapsedSec < 60) hudApproach.textContent = "Glide path Intercept";
+        else if (elapsedSec < 85) hudApproach.textContent = "4-mile Final";
+        else if (elapsedSec < 110) hudApproach.textContent = "Short Final 2 DME";
+        else if (elapsedSec < 115) hudApproach.textContent = "Threshold Crossing";
+        else if (elapsedSec < 170) hudApproach.textContent = "Touchdown / Rollout";
+        else hudApproach.textContent = "Vacating Runway / Taxi";
       }
 
       if (currentPos) {
         const cartographic = Cesium.Cartographic.fromCartesian(currentPos);
         const lon = Cesium.Math.toDegrees(cartographic.longitude);
         const lat = Cesium.Math.toDegrees(cartographic.latitude);
-        const altFt = Math.round(cartographic.height * 3.28084);
+        
+        const altFt = Math.round((cartographic.height - visualGroundZ + ap.altMeters) * 3.28084);
 
-        const thresholdCartesian = Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, ap.altMeters);
+        const thresholdCartesian = Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, visualGroundZ);
         const distMeters = Cesium.Cartesian3.distance(currentPos, thresholdCartesian);
-        const distNM = (distMeters / 1852).toFixed(1);
+        
+        const thresholdDistNM = (elapsedSec > 115) ? -((distMeters / 1852).toFixed(2)) : (distMeters / 1852).toFixed(2);
 
         hudAlt.textContent = `${altFt.toLocaleString()} ft`;
         hudCoords.textContent = `${lat.toFixed(4)}°N, ${Math.abs(lon).toFixed(4)}°W`;
         hudCockpitAlt.textContent = `${altFt}`;
-        hudDist.textContent = `${distNM} NM`;
+        hudDist.textContent = `${thresholdDistNM} NM`;
 
         const nextTime = Cesium.JulianDate.addSeconds(currentTime, 0.25, new Cesium.JulianDate());
         const nextPos = positionProperty.getValue(nextTime);
 
         if (nextPos) {
           Cesium.Cartesian3.subtract(nextPos, currentPos, scratchVelocity);
-          Cesium.Cartesian3.normalize(scratchVelocity, scratchVelocity);
+          const stepDistance = Cesium.Cartesian3.magnitude(scratchVelocity);
+          
+          if (stepDistance > 0.001) {
+            Cesium.Cartesian3.normalize(scratchVelocity, scratchVelocity);
+            Cesium.Cartesian3.clone(scratchVelocity, lastValidVelocity);
+          } else {
+            Cesium.Cartesian3.clone(lastValidVelocity, scratchVelocity);
+          }
 
-          const stepDistance = Cesium.Cartesian3.distance(currentPos, nextPos);
-          const kts = Math.round((stepDistance / 0.25) * 1.94384);
+          let kts = Math.round((stepDistance / 0.25) * 1.94384);
+          if (elapsedSec > 168 && kts < 5) kts = 0; 
+          
           hudSpeed.textContent = `${kts} kts`;
           hudCockpitSpd.textContent = `${kts}`;
 
@@ -627,25 +798,60 @@
           if (headingDeg < 0) headingDeg += 360;
           hudCockpitHdg.textContent = `HDG: ${Math.round(headingDeg).toString().padStart(3, "0")}°`;
 
-          if (cameraMode === "cockpit") {
-            const rotMatrix = Cesium.Transforms.rotationMatrixFromPositionVelocity(
-              currentPos,
-              scratchVelocity,
-              Cesium.Ellipsoid.WGS84
-            );
-            Cesium.Matrix4.fromRotationTranslation(rotMatrix, currentPos, scratchTransform);
+          engineFireSystem.show = false;
+          engineSmokeSystem.show = false;
+          cockpitSmokeSystem.show = false;
+          gearSparkSystem.show = false;
 
+          const rotMatrix = Cesium.Transforms.rotationMatrixFromPositionVelocity(
+            currentPos,
+            scratchVelocity,
+            Cesium.Ellipsoid.WGS84
+          );
+          const modelMatrix = Cesium.Matrix4.fromRotationTranslation(rotMatrix, currentPos);
+
+          if (activeEmergency === 'fire') {
+            engineFireSystem.show = true;
+            engineSmokeSystem.show = true;
+            engineFireSystem.modelMatrix = modelMatrix;
+            engineSmokeSystem.modelMatrix = modelMatrix;
+            const trs = new Cesium.TranslationRotationScale();
+            trs.translation = new Cesium.Cartesian3(4.5, -3.0, -0.5); 
+            trs.rotation = Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_X, Cesium.Math.toRadians(-90));
+            const emitterModelMatrix = Cesium.Matrix4.fromTranslationRotationScale(trs);
+            engineFireSystem.emitterModelMatrix = emitterModelMatrix;
+            engineSmokeSystem.emitterModelMatrix = emitterModelMatrix;
+          }
+
+          if (activeEmergency === 'fumes') {
+            cockpitSmokeSystem.show = true;
+            cockpitSmokeSystem.modelMatrix = modelMatrix;
+            const trs = new Cesium.TranslationRotationScale();
+            trs.translation = new Cesium.Cartesian3(10.0, 0.0, 1.0);
+            cockpitSmokeSystem.emitterModelMatrix = Cesium.Matrix4.fromTranslationRotationScale(trs);
+          }
+
+          if (activeEmergency === 'gear' && elapsedSec >= 120 && kts > 10) {
+            gearSparkSystem.show = true;
+            gearSparkSystem.modelMatrix = modelMatrix;
+            const trs = new Cesium.TranslationRotationScale();
+            trs.translation = new Cesium.Cartesian3(12.0, 0.0, -2.5);
+            trs.rotation = Cesium.Quaternion.fromAxisAngle(Cesium.Cartesian3.UNIT_Y, Cesium.Math.toRadians(-30));
+            gearSparkSystem.emitterModelMatrix = Cesium.Matrix4.fromTranslationRotationScale(trs);
+          }
+
+          if (cameraMode === "cockpit") {
+            Cesium.Matrix4.fromRotationTranslation(rotMatrix, currentPos, scratchTransform);
             Cesium.Matrix4.multiplyByTranslation(
               scratchTransform,
               externalNoseOffset,
               mountTransform
             );
-
             viewer.camera.lookAtTransform(
               mountTransform,
               new Cesium.HeadingPitchRange(
                 Cesium.Math.toRadians(90),
-                Cesium.Math.toRadians(-2.5),
+                Cesium.Math.toRadians(-2.5), 
                 0.1
               )
             );
