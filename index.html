@@ -16,7 +16,6 @@
       color: #fff;
     }
 
-    /* Suppression of Cesium branding, credits, timeline, and animation widgets */
     .cesium-widget-credits,
     .cesium-credit-logoContainer,
     .cesium-credit-textContainer,
@@ -54,14 +53,13 @@
       outline: none; margin-top: 4px;
     }
     
-    #hud-controls { bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+    #hud-controls { bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; }
     button {
       background: #1e293b; color: #38bdf8; border: 1px solid #0284c7;
       padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;
     }
     button.active { background: #0284c7; color: #fff; }
 
-    /* Tactical Radio Comms Log Panel */
     #hud-comms {
       bottom: 85px;
       left: 20px;
@@ -91,7 +89,6 @@
     .comm-sender-pilot { color: #4ade80; font-weight: 700; flex-shrink: 0; }
     .comm-text { color: #f1f5f9; }
 
-    /* Cockpit HUD Reticle */
     #cockpit-hud-overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
@@ -113,7 +110,6 @@
 <body>
   <div id="cesiumContainer"></div>
 
-  <!-- Cockpit HUD Reticle Overlay -->
   <div id="cockpit-hud-overlay">
     <svg class="hud-reticle-svg" viewBox="0 0 1000 1000" preserveAspectRatio="xMidYMid slice">
       <defs>
@@ -124,31 +120,24 @@
       <g filter="url(#hud-glow)">
         <path d="M 485 500 L 495 500 M 505 500 L 515 500 M 500 485 L 500 495 M 500 505 L 500 515" />
         <circle cx="500" cy="500" r="3" />
-
         <circle cx="500" cy="500" r="10" />
         <line x1="490" y1="500" x2="475" y2="500" />
         <line x1="510" y1="500" x2="525" y2="500" />
         <line x1="500" y1="490" x2="500" y2="475" />
-
         <line x1="360" y1="500" x2="440" y2="500" stroke-dasharray="8 4" />
         <line x1="560" y1="500" x2="640" y2="500" stroke-dasharray="8 4" />
-
         <path d="M 410 440 L 440 440 L 440 448 M 590 440 L 560 440 L 560 448" />
         <text x="390" y="444" fill="#00ff66" stroke="none">+5</text>
         <text x="600" y="444" fill="#00ff66" stroke="none">+5</text>
-
         <path d="M 410 560 L 440 560 L 440 552 M 590 560 L 560 560 L 560 552" stroke-dasharray="6 3" />
         <text x="390" y="564" fill="#00ff66" stroke="none">-5</text>
         <text x="600" y="564" fill="#00ff66" stroke="none">-5</text>
-
         <rect x="380" y="70" width="240" height="28" stroke="#00ff66" />
         <polygon points="500,103 495,110 505,110" fill="#00ff66" />
         <text id="hud-cockpit-hdg" x="500" y="90" text-anchor="middle" fill="#00ff66" stroke="none" font-weight="bold" font-size="14">HDG: ---°</text>
-
         <rect x="230" y="380" width="80" height="240" stroke="#00ff66" />
         <text x="270" y="405" text-anchor="middle" fill="#00ff66" stroke="none">GS KTS</text>
         <text id="hud-cockpit-spd" x="270" y="505" text-anchor="middle" fill="#00ff66" stroke="none" font-size="20" font-weight="bold">---</text>
-
         <rect x="690" y="380" width="90" height="240" stroke="#00ff66" />
         <text x="735" y="405" text-anchor="middle" fill="#00ff66" stroke="none">ALT FT</text>
         <text id="hud-cockpit-alt" x="735" y="505" text-anchor="middle" fill="#00ff66" stroke="none" font-size="20" font-weight="bold">---</text>
@@ -158,7 +147,7 @@
 
   <div id="hud-telemetry" class="overlay-panel">
     <div class="hud-title" id="hud-station-title">Airport Telemetry</div>
-    <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">SPEEDBIRD 412</span></div>
+    <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">SPEEDBIRD 3</span></div>
     <div class="data-row"><span class="data-label">Approach:</span><span class="data-val" id="hud-approach">15-mile Final</span></div>
     <div class="data-row"><span class="data-label">Altitude:</span><span class="data-val" id="hud-alt">-- ft</span></div>
     <div class="data-row"><span class="data-label">Ground Speed:</span><span class="data-val" id="hud-speed">-- kts</span></div>
@@ -180,23 +169,22 @@
   </div>
 
   <div id="hud-controls" class="overlay-panel">
+    <button id="btn-playpause">Pause</button>
     <button id="btn-chase" class="active">Chase Cam</button>
     <button id="btn-cockpit">Cockpit View</button>
     <button id="btn-tower">Tower View</button>
     <button id="btn-free">Free Orbit</button>
     <button id="btn-lighting">Night Mode</button>
+    <select id="speedSelect" style="width: auto; margin-top: 0; margin-left: 5px;">
+      <option value="1">1x Speed</option>
+      <option value="2">2x Speed</option>
+      <option value="4">4x Speed</option>
+    </select>
   </div>
 
   <script>
-    const esriLayer = Cesium.ImageryLayer.fromProviderAsync(
-      Cesium.ArcGisMapServerImageryProvider.fromUrl(
-        "https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer",
-        { enablePickFeatures: false }
-      )
-    );
-
+    // Bypass custom ESRI async loading and HDR configurations causing Chrome WebGL initialization failures
     const viewer = new Cesium.Viewer("cesiumContainer", {
-      baseLayer: esriLayer,
       baseLayerPicker: false,
       geocoder: false,
       homeButton: false,
@@ -205,9 +193,10 @@
       navigationHelpButton: false,
       animation: false,
       timeline: false,
-      shouldAnimate: true,
-      creditContainer: document.createElement("div")
+      shouldAnimate: true
     });
+
+    viewer.scene.globe.enableLighting = false;
 
     const airports = {
       egll: { name: "London Heathrow",      icao: "EGLL", lat: 51.4774, lon: -0.4580, heading: 270, rwy: "27R", atcName: "Heathrow Director", twrName: "Heathrow Tower", altMeters: 25, appFreq: "119.725", twrFreq: "118.500" },
@@ -255,7 +244,6 @@
     let currentAirportKey = "egll";
     let isNight = false;
 
-    // Speech Synthesis Subsystem
     let voices = [];
     let audioUnlocked = false;
 
@@ -284,7 +272,7 @@
         .replace(/QNH/gi, "Q-N-H")
         .replace(/ILS/gi, "I-L-S")
         .replace(/DME/gi, "D-M-E")
-        .replace(/BAW412/gi, "Speedbird 4 1 2")
+        .replace(/BAW3/gi, "Speedbird 3")
         .replace(/1013/gi, "1 0 1 3")
         .replace(/1014/gi, "1 0 1 4")
         .replace(/(\d{3})\.(\d{3})/g, "$1 point $2");
@@ -298,18 +286,11 @@
         const atcVoice = voices.find(v => v.lang.includes("en") && (v.name.includes("Male") || v.name.includes("George") || v.name.includes("Oliver") || v.name.includes("David")));
         if (atcVoice) utterance.voice = atcVoice;
       } else {
-        // Distinct Female Pilot Configuration
         utterance.pitch = 1.25;
         utterance.rate = 1.05;
         const pilotVoice = voices.find(v => v.lang.includes("en") && (
-          v.name.includes("Female") ||
-          v.name.includes("Samantha") ||
-          v.name.includes("Victoria") ||
-          v.name.includes("Zira") ||
-          v.name.includes("Hazel") ||
-          v.name.includes("Susan") ||
-          v.name.includes("Karen") ||
-          v.name.includes("Catherine")
+          v.name.includes("Female") || v.name.includes("Samantha") || v.name.includes("Victoria") || 
+          v.name.includes("Zira") || v.name.includes("Hazel") || v.name.includes("Susan") || v.name.includes("Karen") || v.name.includes("Catherine")
         ));
         if (pilotVoice) utterance.voice = pilotVoice;
       }
@@ -327,8 +308,6 @@
     viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
     viewer.clock.multiplier = 1.0;
 
-    viewer.scene.globe.enableLighting = true;
-
     function calculateDestination(lat, lon, bearingDeg, distanceMeters) {
       const R = 6371000;
       const rad = Math.PI / 180;
@@ -336,14 +315,11 @@
       const rLon = lon * rad;
       const rBearing = bearingDeg * rad;
       const dR = distanceMeters / R;
-
       const nLat = Math.asin(Math.sin(rLat) * Math.cos(dR) + Math.cos(rLat) * Math.sin(dR) * Math.cos(rBearing));
       const nLon = rLon + Math.atan2(Math.sin(rBearing) * Math.sin(dR) * Math.cos(rLat), Math.cos(dR) - Math.sin(rLat) * Math.sin(nLat));
-
       return { lat: nLat / rad, lon: nLon / rad };
     }
 
-    // ATC Dialogue giving exact rounded 100-ft altitude assignments
     function generateCivilDialogue(ap) {
       const fieldElevationFt = ap.altMeters * 3.28084;
       const assignedAltFt = Math.round((3000 + fieldElevationFt) / 100) * 100;
@@ -351,110 +327,19 @@
       const estAltFt = Math.round((2200 + fieldElevationFt) / 100) * 100;
 
       return [
-        {
-          s: 2,
-          phase: "15-mile Final",
-          sender: "atc",
-          freq: ap.appFreq,
-          label: ap.atcName,
-          text: `Speedbird 412, ${ap.atcName}, radar contact 15 miles straight-in. Descend to altitude ${assignedAltFt} feet on QNH 1013. Cleared straight-in ILS Runway ${ap.rwy}.`
-        },
-        {
-          s: 8,
-          phase: "15-mile Final",
-          sender: "pilot",
-          freq: ap.appFreq,
-          label: "BAW412",
-          text: `Descend ${assignedAltFt} feet on 1013, cleared ILS Runway ${ap.rwy}, Speedbird 412.`
-        },
-        {
-          s: 31,
-          phase: "Glidepath Intercept",
-          sender: "pilot",
-          freq: ap.appFreq,
-          label: "BAW412",
-          text: `${ap.atcName}, Speedbird 412 descending through ${intAltFt} feet, localiser captured, glideslope alive.`
-        },
-        {
-          s: 37,
-          phase: "Glidepath Intercept",
-          sender: "atc",
-          freq: ap.appFreq,
-          label: ap.atcName,
-          text: `Speedbird 412, roger. Maintain 160 knots to 4 DME. Contact ${ap.twrName} on ${ap.twrFreq}.`
-        },
-        {
-          s: 43,
-          phase: "Glidepath Intercept",
-          sender: "pilot",
-          freq: ap.twrFreq,
-          label: "BAW412",
-          text: `160 to 4, over to Tower on ${ap.twrFreq}, good day. Speedbird 412.`
-        },
-        {
-          s: 62,
-          phase: "Established 8 DME",
-          sender: "pilot",
-          freq: ap.twrFreq,
-          label: "BAW412",
-          text: `${ap.twrName}, Speedbird 412 fully established Runway ${ap.rwy}, 8 miles out, descending through ${estAltFt} feet.`
-        },
-        {
-          s: 68,
-          phase: "Established 8 DME",
-          sender: "atc",
-          freq: ap.twrFreq,
-          label: ap.twrName,
-          text: `Speedbird 412, ${ap.twrName}, welcome. Continue approach Runway ${ap.rwy}, wind ${ap.heading - 10} degrees at 8 knots.`
-        },
-        {
-          s: 88,
-          phase: "Short Final 4 DME",
-          sender: "pilot",
-          freq: ap.twrFreq,
-          label: "BAW412",
-          text: `Speedbird 412, 4 miles, gear down and locked, flaps full, landing checks complete.`
-        },
-        {
-          s: 94,
-          phase: "Short Final 4 DME",
-          sender: "atc",
-          freq: ap.twrFreq,
-          label: ap.twrName,
-          text: `Speedbird 412, wind ${(ap.heading + 5) % 360} degrees at 9 knots, Runway ${ap.rwy} cleared to land.`
-        },
-        {
-          s: 99,
-          phase: "Short Final 4 DME",
-          sender: "pilot",
-          freq: ap.twrFreq,
-          label: "BAW412",
-          text: `Cleared to land Runway ${ap.rwy}, Speedbird 412.`
-        },
-        {
-          s: 110,
-          phase: "Threshold Crossing",
-          sender: "pilot",
-          freq: ap.twrFreq,
-          label: "BAW412",
-          text: `Passing threshold, 50... 30... 10... Retard.`
-        },
-        {
-          s: 115,
-          phase: "Touchdown & Rollout",
-          sender: "pilot",
-          freq: ap.twrFreq,
-          label: "BAW412",
-          text: `Touchdown. Thrust reversers green, spoilers deployed, manual braking.`
-        },
-        {
-          s: 119,
-          phase: "Vacating",
-          sender: "atc",
-          freq: ap.twrFreq,
-          label: ap.twrName,
-          text: `Speedbird 412, turn left first available rapid exit taxiway, contact Ground on 121.700.`
-        }
+        { s: 2, phase: "15-mile Final", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, ${ap.atcName}, radar contact 15 miles straight-in. Descend to altitude ${assignedAltFt} feet on QNH 1013. Cleared straight-in ILS Runway ${ap.rwy}.` },
+        { s: 8, phase: "15-mile Final", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Descend ${assignedAltFt} feet on 1013, cleared ILS Runway ${ap.rwy}, Speedbird 3.` },
+        { s: 31, phase: "Glidepath Intercept", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `${ap.atcName}, Speedbird 3 descending through ${intAltFt} feet, localiser captured, glideslope alive.` },
+        { s: 37, phase: "Glidepath Intercept", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, roger. Maintain 160 knots to 4 DME. Contact ${ap.twrName} on ${ap.twrFreq}.` },
+        { s: 43, phase: "Glidepath Intercept", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `160 to 4, over to Tower on ${ap.twrFreq}, good day. Speedbird 3.` },
+        { s: 62, phase: "Established 8 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `${ap.twrName}, Speedbird 3 fully established Runway ${ap.rwy}, 8 miles out, descending through ${estAltFt} feet.` },
+        { s: 68, phase: "Established 8 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, ${ap.twrName}, welcome. Continue approach Runway ${ap.rwy}, wind ${ap.heading - 10} degrees at 8 knots.` },
+        { s: 88, phase: "Short Final 4 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Speedbird 3, 4 miles, gear down and locked, flaps full, landing checks complete.` },
+        { s: 94, phase: "Short Final 4 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, wind ${(ap.heading + 5) % 360} degrees at 9 knots, Runway ${ap.rwy} cleared to land.` },
+        { s: 99, phase: "Short Final 4 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3.` },
+        { s: 110, phase: "Threshold Crossing", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Passing threshold, 50... 30... 10... Retard.` },
+        { s: 115, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Touchdown. Thrust reversers green, spoilers deployed, manual braking.` },
+        { s: 119, phase: "Vacating", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, turn left first available rapid exit taxiway, contact Ground on 121.700.` }
       ];
     }
 
@@ -558,13 +443,29 @@
       loadAirport(e.target.value);
     };
 
+    const btnPlayPause = document.getElementById("btn-playpause");
     const btnChase = document.getElementById("btn-chase");
     const btnCockpit = document.getElementById("btn-cockpit");
     const btnTower = document.getElementById("btn-tower");
     const btnFree = document.getElementById("btn-free");
     const btnLighting = document.getElementById("btn-lighting");
+    const speedSelect = document.getElementById("speedSelect");
     const modeButtons = [btnChase, btnCockpit, btnTower, btnFree];
     const cockpitOverlay = document.getElementById("cockpit-hud-overlay");
+
+    btnPlayPause.onclick = () => {
+      const isAnimating = viewer.clock.shouldAnimate;
+      viewer.clock.shouldAnimate = !isAnimating;
+      btnPlayPause.textContent = isAnimating ? "Play" : "Pause";
+      
+      if (window.speechSynthesis) {
+        if (isAnimating) {
+          window.speechSynthesis.pause();
+        } else {
+          window.speechSynthesis.resume();
+        }
+      }
+    };
 
     function setActiveMode(newMode, activeBtn) {
       cameraMode = newMode;
@@ -599,13 +500,19 @@
       isNight = !isNight;
       btnLighting.textContent = isNight ? "Day Mode" : "Night Mode";
       if (isNight) {
+        viewer.scene.globe.enableLighting = true;
         viewer.scene.light = new Cesium.DirectionalLight({
-          direction: new Cesium.Cartesian3(0.1, 0.2, 0.95),
-          intensity: 0.1
+          direction: new Cesium.Cartesian3(0.1, 0.2, -0.95),
+          intensity: 0.2
         });
       } else {
+        viewer.scene.globe.enableLighting = false;
         viewer.scene.light = new Cesium.SunLight();
       }
+    };
+
+    speedSelect.onchange = (e) => {
+      viewer.clock.multiplier = parseFloat(e.target.value);
     };
 
     const hudAlt = document.getElementById("hud-alt");
@@ -649,7 +556,7 @@
           const timeMins = Math.floor(comm.s / 60).toString().padStart(2, "0");
           const timeSecs = Math.floor(comm.s % 60).toString().padStart(2, "0");
           const senderClass = comm.sender === "atc" ? "comm-sender-atc" : "comm-sender-pilot";
-          const senderLabel = comm.sender === "atc" ? "ATC:" : "BAW412:";
+          const senderLabel = comm.sender === "atc" ? "ATC:" : "BAW3:";
 
           line.innerHTML = `<span class="comm-time">[+${timeMins}:${timeSecs}]</span><span class="${senderClass}">${senderLabel}</span><span class="comm-text">${comm.text}</span>`;
           commsLog.appendChild(line);
