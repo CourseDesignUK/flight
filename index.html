@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>London Heathrow (EGLL) 3D Flight Tracker</title>
+
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css" rel="stylesheet" />
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #cesiumContainer {
+      width: 100%; height: 100%; overflow: hidden; background: #000;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      color: #fff;
+    }
+    .overlay-panel {
+      position: absolute;
+      background: rgba(13, 17, 23, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      padding: 12px 16px;
+      backdrop-filter: blur(10px);
+      z-index: 100;
+    }
+    #hud-telemetry { top: 20px; left: 20px; width: 290px; }
+    .hud-title {
+      font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
+      color: #38bdf8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 4px; margin-bottom: 8px; font-weight: 700;
+    }
+    .data-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 13px; }
+    .data-label { color: #94a3b8; }
+    .data-val { font-weight: 600; font-family: monospace; color: #f8fafc; }
+    #hud-controls { bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; }
+    button {
+      background: #1e293b; color: #38bdf8; border: 1px solid #0284c7;
+      padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;
+    }
+    button.active { background: #0284c7; color: #fff; }
+  </style>
+</head>
+<body>
+  <div id="cesiumContainer"></div>
+
+  <div id="hud-telemetry" class="overlay-panel">
+    <div class="hud-title">Heathrow (EGLL) Telemetry</div>
+    <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">BAW-7598</span></div>
+    <div class="data-row"><span class="data-label">Approach:</span><span class="data-val">ILS Rwy 27R</span></div>
+    <div class="data-row"><span class="data-label">Altitude:</span><span class="data-val" id="hud-alt">-- ft</span></div>
+    <div class="data-row"><span class="data-label">Ground Speed:</span><span class="data-val" id="hud-speed">-- kts</span></div>
+    <div class="data-row"><span class="data-label">Position:</span><span class="data-val" id="hud-coords">-- , --</span></div>
+  </div>
+
+  <div id="hud-controls" class="overlay-panel">
+    <button id="btn-chase" class="active">Chase Cam</button>
+    <button id="btn-tower">Tower View</button>
+    <button id="btn-free">Free Orbit</button>
+  </div>
+
+  <script>
+    // -------------------------------------------------------------
+    // 1. Viewer Setup without Cesium Ion Dependency
+    // -------------------------------------------------------------
+    // OpenStreetMap imagery requires zero API tokens
+    const osmProvider = new Cesium.UrlTemplateImageryProvider({
+      url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+      subdomains: ["a", "b", "c"],
+      maximumLevel: 19
+    });
+
+    const viewer = new Cesium.Viewer("cesiumContainer", {
+      imageryProvider: osmProvider,
+      baseLayerPicker: false,
+      geocoder: false,
+      homeButton: false,
+      infoBox: false,
+      selectionIndicator: false,
+      navigationHelpButton: false,
+      animation: true,
+      timeline: true,
+      shouldAnimate: true
+    });
+
+    // -------------------------------------------------------------
+    // 2. Timeline Configuration
+    // -------------------------------------------------------------
+    const startIso = "2026-09-11T12:00:00Z";
+    const startTime = Cesium.JulianDate.fromIso8601(startIso);
+    const duration = 120;
+    const stopTime = Cesium.JulianDate.addSeconds(startTime, duration, new Cesium.JulianDate());
+
+    viewer.clock.startTime = startTime.clone();
+    viewer.clock.stopTime = stopTime.clone();
+    viewer.clock.currentTime = startTime.clone();
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+    viewer.clock.multiplier = 1.0;
+    viewer.timeline.zoomTo(startTime, stopTime);
+
+    // -------------------------------------------------------------
+    // 3. Heathrow Flight Path Interpolation
+    // -------------------------------------------------------------
+    const waypoints = [
+      { s: 0,   lon: -0.2200, lat: 51.4795, alt: 900 },
+      { s: 30,  lon: -0.2950, lat: 51.4788, alt: 650 },
+      { s: 60,  lon: -0.3700, lat: 51.4780, alt: 400 },
+      { s: 90,  lon: -0.4200, lat: 51.4776, alt: 150 },
+      { s: 110, lon: -0.4430, lat: 51.4775, alt: 35 },
+      { s: 120, lon: -0.4580, lat: 51.4774, alt: 35 }
+    ];
+
+    const positionProperty = new Cesium.SampledPositionProperty();
+    positionProperty.setInterpolationOptions({
+      interpolationDegree: 2,
+      interpolationAlgorithm: Cesium.HermitePolynomialApproximation
+    });
+
+    waypoints.forEach(wp => {
+      const time = Cesium.JulianDate.addSeconds(startTime, wp.s, new Cesium.JulianDate());
+      const position = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.alt);
+      positionProperty.addSample(time, position);
+    });
+
+    // -------------------------------------------------------------
+    // 4. Aircraft & Fallback Visual Marker
+    // -------------------------------------------------------------
+    const aircraftEntity = viewer.entities.add({
+      availability: new Cesium.TimeIntervalCollection([
+        new Cesium.TimeInterval({ start: startTime, stop: stopTime })
+      ]),
+      position: positionProperty,
+      orientation: new Cesium.VelocityOrientationProperty(positionProperty),
+      // 3D Model
+      model: {
+        uri: "https://raw.githubusercontent.com/CesiumGS/cesium/main/Apps/SampleData/models/CesiumAir/Cesium_Air.glb",
+        minimumPixelSize: 64,
+        maximumScale: 1000
+      },
+      // Fallback point marker to guarantee visibility if remote GLB fails to fetch
+      point: {
+        pixelSize: 10,
+        color: Cesium.Color.RED,
+        outlineColor: Cesium.Color.WHITE,
+        outlineWidth: 2
+      },
+      path: {
+        resolution: 1,
+        material: new Cesium.PolylineGlowMaterialProperty({
+          glowPower: 0.25,
+          color: Cesium.Color.fromCssColorString("#38bdf8")
+        }),
+        width: 3,
+        leadTime: 0,
+        trailTime: 120
+      }
+    });
+
+    // Track entity
+    viewer.trackedEntity = aircraftEntity;
+
+    // -------------------------------------------------------------
+    // 5. Controls
+    // -------------------------------------------------------------
+    const btnChase = document.getElementById("btn-chase");
+    const btnTower = document.getElementById("btn-tower");
+    const btnFree = document.getElementById("btn-free");
+    const modeButtons = [btnChase, btnTower, btnFree];
+
+    function setActiveBtn(activeBtn) {
+      modeButtons.forEach(b => b.classList.remove("active"));
+      activeBtn.classList.add("active");
+    }
+
+    btnChase.onclick = () => {
+      setActiveBtn(btnChase);
+      viewer.trackedEntity = aircraftEntity;
+    };
+
+    btnTower.onclick = () => {
+      setActiveBtn(btnTower);
+      viewer.trackedEntity = undefined;
+      viewer.camera.flyTo({
+        destination: Cesium.Cartesian3.fromDegrees(-0.4505, 51.4725, 120),
+        orientation: {
+          heading: Cesium.Math.toRadians(70),
+          pitch: Cesium.Math.toRadians(2),
+          roll: 0
+        },
+        duration: 1.5
+      });
+    };
+
+    btnFree.onclick = () => {
+      setActiveBtn(btnFree);
+      viewer.trackedEntity = undefined;
+    };
+
+    // -------------------------------------------------------------
+    // 6. HUD Telemetry
+    // -------------------------------------------------------------
+    const hudAlt = document.getElementById("hud-alt");
+    const hudSpeed = document.getElementById("hud-speed");
+    const hudCoords = document.getElementById("hud-coords");
+
+    viewer.scene.preRender.addEventListener(() => {
+      const currentTime = viewer.clock.currentTime;
+      const currentPos = positionProperty.getValue(currentTime);
+
+      if (currentPos) {
+        const cartographic = Cesium.Cartographic.fromCartesian(currentPos);
+        const lon = Cesium.Math.toDegrees(cartographic.longitude);
+        const lat = Cesium.Math.toDegrees(cartographic.latitude);
+        const altFt = Math.round(cartographic.height * 3.28084);
+
+        hudAlt.textContent = `${altFt.toLocaleString()} ft`;
+        hudCoords.textContent = `${lat.toFixed(4)}°N, ${Math.abs(lon).toFixed(4)}°W`;
+
+        const nextTime = Cesium.JulianDate.addSeconds(currentTime, 1, new Cesium.JulianDate());
+        const nextPos = positionProperty.getValue(nextTime);
+        if (nextPos) {
+          const distMeters = Cesium.Cartesian3.distance(currentPos, nextPos);
+          const kts = Math.round(distMeters * 1.94384);
+          hudSpeed.textContent = `${kts} kts`;
+        }
+      }
+    });
+  </script>
+</body>
+</html>
