@@ -183,8 +183,13 @@
   </div>
 
   <script>
-    // Bypass custom ESRI async loading and HDR configurations causing Chrome WebGL initialization failures
     const viewer = new Cesium.Viewer("cesiumContainer", {
+      baseLayer: new Cesium.ImageryLayer(
+        new Cesium.UrlTemplateImageryProvider({
+          url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+          maximumLevel: 19
+        })
+      ),
       baseLayerPicker: false,
       geocoder: false,
       homeButton: false,
@@ -193,10 +198,12 @@
       navigationHelpButton: false,
       animation: false,
       timeline: false,
-      shouldAnimate: true
+      shouldAnimate: true,
+      creditContainer: document.createElement("div")
     });
 
     viewer.scene.globe.enableLighting = false;
+    viewer.scene.highDynamicRange = false;
 
     const airports = {
       egll: { name: "London Heathrow",      icao: "EGLL", lat: 51.4774, lon: -0.4580, heading: 270, rwy: "27R", atcName: "Heathrow Director", twrName: "Heathrow Tower", altMeters: 25, appFreq: "119.725", twrFreq: "118.500" },
@@ -289,8 +296,14 @@
         utterance.pitch = 1.25;
         utterance.rate = 1.05;
         const pilotVoice = voices.find(v => v.lang.includes("en") && (
-          v.name.includes("Female") || v.name.includes("Samantha") || v.name.includes("Victoria") || 
-          v.name.includes("Zira") || v.name.includes("Hazel") || v.name.includes("Susan") || v.name.includes("Karen") || v.name.includes("Catherine")
+          v.name.includes("Female") ||
+          v.name.includes("Samantha") ||
+          v.name.includes("Victoria") ||
+          v.name.includes("Zira") ||
+          v.name.includes("Hazel") ||
+          v.name.includes("Susan") ||
+          v.name.includes("Karen") ||
+          v.name.includes("Catherine")
         ));
         if (pilotVoice) utterance.voice = pilotVoice;
       }
