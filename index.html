@@ -50,7 +50,7 @@
     }
     #btn-skip-intro {
       position: absolute;
-      bottom: 60px;
+      bottom: 30px;
       right: 30px;
       z-index: 1001;
       background: rgba(15, 23, 42, 0.6);
@@ -161,7 +161,7 @@
       left: 20px;
       width: 480px;
       height: 140px;
-      display: flex;
+      display: none;
       flex-direction: column;
     }
 
@@ -298,12 +298,13 @@
       <button id="btn-playpause">Pause</button>
       <button id="btn-chase" class="active">Chase</button>
       <button id="btn-cockpit">Cockpit</button>
+      <button id="btn-free">Free</button>
     </div>
 
     <div class="bar-divider"></div>
 
     <div class="bar-section">
-      <button id="btn-toggle-comms" class="active" title="Toggle Comms Overlay">Dialogue</button>
+      <button id="btn-toggle-comms" title="Toggle Comms Overlay">Dialogue</button>
       <button id="btn-em-fire" class="btn-danger">Engine Fire</button>
       <button id="btn-em-fumes" class="btn-danger">Cockpit Fumes</button>
       <button id="btn-em-gear" class="btn-warning">Stuck Gear</button>
@@ -343,7 +344,7 @@
 
     btnCloseComms.addEventListener("click", () => setCommsVisible(false));
     btnToggleComms.addEventListener("click", () => {
-      const isVisible = panelComms.style.display !== "none";
+      const isVisible = panelComms.style.display === "flex";
       setCommsVisible(!isVisible);
     });
 
@@ -677,23 +678,7 @@
 
       if (cameraMode === "chase") {
         viewer.trackedEntity = aircraftEntity;
-      } else if (cameraMode === "tower") {
-        setTowerCamera();
       }
-    }
-
-    function setTowerCamera() {
-      const ap = airports[currentAirportKey];
-      const towerPos = calculateDestination(ap.thrLat, ap.thrLon, (ap.heading + 90) % 360, 300);
-      viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(towerPos.lon, towerPos.lat, 100),
-        orientation: {
-          heading: Cesium.Math.toRadians((ap.heading + 180) % 360),
-          pitch: Cesium.Math.toRadians(-5),
-          roll: 0
-        },
-        duration: 1.0
-      });
     }
 
     function triggerEmergency(type) {
@@ -750,9 +735,8 @@
     const btnPlayPause = document.getElementById("btn-playpause");
     const btnChase = document.getElementById("btn-chase");
     const btnCockpit = document.getElementById("btn-cockpit");
-    const btnTower = document.getElementById("btn-tower");
     const btnFree = document.getElementById("btn-free");
-    const modeButtons = [btnChase, btnCockpit, btnTower, btnFree];
+    const modeButtons = [btnChase, btnCockpit, btnFree];
     const cockpitOverlay = document.getElementById("cockpit-hud-overlay");
 
     btnPlayPause.onclick = () => {
@@ -785,12 +769,6 @@
     btnCockpit.onclick = () => {
       setActiveMode("cockpit", btnCockpit);
       viewer.trackedEntity = undefined;
-    };
-
-    btnTower.onclick = () => {
-      setActiveMode("tower", btnTower);
-      viewer.trackedEntity = undefined;
-      setTowerCamera();
     };
 
     btnFree.onclick = () => {
