@@ -31,7 +31,6 @@
       pointer-events: none !important;
     }
 
-    /* Splash Screen Video Overlay */
     #splash-container {
       position: absolute;
       top: 0; left: 0;
@@ -67,7 +66,6 @@
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
     }
 
-    /* Shared Glassmorphism Profile */
     .glass-panel {
       background: rgba(15, 23, 42, 0.55);
       border: 1px solid rgba(255, 255, 255, 0.18);
@@ -77,7 +75,6 @@
                   inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
     }
 
-    /* Consolidated Bottom Menu Bar */
     #bottom-menu-bar {
       position: absolute;
       bottom: 0;
@@ -148,7 +145,6 @@
     .btn-warning { background: rgba(120, 53, 15, 0.65); border-color: rgba(245, 158, 11, 0.5); color: #fcd34d; }
     .btn-warning:hover:not(:disabled) { background: rgba(146, 64, 14, 0.85); color: #fff; }
 
-    /* Comms Transcript HUD */
     .overlay-panel {
       position: absolute;
       border-radius: 8px;
@@ -194,10 +190,7 @@
       backdrop-filter: none;
       -webkit-backdrop-filter: none;
     }
-    .hud-close-btn:hover {
-      color: #ef4444;
-      background: transparent;
-    }
+    .hud-close-btn:hover { color: #ef4444; background: transparent; }
 
     #comms-log {
       flex: 1;
@@ -371,34 +364,170 @@
     viewer.scene.globe.enableLighting = false;
     viewer.scene.highDynamicRange = false;
 
+    // Centerline defined by surveyed physical entry threshold (thr) and runway rollout end (end)
     const airports = {
-      egll: { name: "London Heathrow",       icao: "EGLL", thrLat: 51.4776, thrLon: -0.4332, heading: 270, rwy: "27R", atcName: "Heathrow Director", twrName: "Heathrow Tower", altMeters: 25, appFreq: "119.725", twrFreq: "118.500" },
-      egkk: { name: "London Gatwick",        icao: "EGKK", thrLat: 51.1565, thrLon: -0.1607, heading: 260, rwy: "26L", atcName: "Gatwick Director",  twrName: "Gatwick Tower",  altMeters: 62, appFreq: "126.825", twrFreq: "124.225" },
-      egss: { name: "London Stansted",       icao: "EGSS", thrLat: 51.8953, thrLon:  0.2541, heading: 224, rwy: "22",  atcName: "Stansted Radar",    twrName: "Stansted Tower", altMeters: 106, appFreq: "120.625", twrFreq: "123.800" },
-      eggw: { name: "London Luton",          icao: "EGGW", thrLat: 51.8767, thrLon: -0.3524, heading: 257, rwy: "26",  atcName: "Luton Radar",       twrName: "Luton Tower",    altMeters: 160, appFreq: "129.550", twrFreq: "132.550" },
-      eglc: { name: "London City",           icao: "EGLC", thrLat: 51.5050, thrLon:  0.0645, heading: 273, rwy: "27",  atcName: "Thames Radar",      twrName: "City Tower",     altMeters: 6,   appFreq: "132.700", twrFreq: "118.075" },
-      egcc: { name: "Manchester",            icao: "EGCC", thrLat: 53.3638, thrLon: -2.2570, heading: 232, rwy: "23R", atcName: "Manchester Radar", twrName: "Manchester Tower",altMeters: 78, appFreq: "118.575", twrFreq: "118.625" },
-      egbb: { name: "Birmingham",            icao: "EGBB", thrLat: 52.4439, thrLon: -1.7375, heading: 331, rwy: "33",  atcName: "Birmingham Radar", twrName: "Birmingham Tower",altMeters: 100, appFreq: "131.000", twrFreq: "118.300" },
-      egph: { name: "Edinburgh",             icao: "EGPH", thrLat: 55.9550, thrLon: -3.3512, heading: 236, rwy: "24",  atcName: "Edinburgh Radar",  twrName: "Edinburgh Tower",altMeters: 41, appFreq: "121.200", twrFreq: "118.700" },
-      egpf: { name: "Glasgow",               icao: "EGPF", thrLat: 55.8772, thrLon: -4.4172, heading: 230, rwy: "23",  atcName: "Glasgow Radar",    twrName: "Glasgow Tower",  altMeters: 8,   appFreq: "119.100", twrFreq: "118.800" },
-      eggd: { name: "Bristol",               icao: "EGGD", thrLat: 51.3828, thrLon: -2.7042, heading: 268, rwy: "27",  atcName: "Bristol Radar",    twrName: "Bristol Tower",  altMeters: 190, appFreq: "125.650", twrFreq: "133.850" },
-      egnt: { name: "Newcastle",             icao: "EGNT", thrLat: 55.0422, thrLon: -1.6760, heading: 252, rwy: "25",  atcName: "Newcastle Radar",  twrName: "Newcastle Tower",altMeters: 81, appFreq: "124.375", twrFreq: "119.700" },
-      eggp: { name: "Liverpool John Lennon", icao: "EGGP", thrLat: 53.3338, thrLon: -2.8335, heading: 268, rwy: "27",  atcName: "Liverpool Radar",  twrName: "Liverpool Tower",altMeters: 25, appFreq: "119.850", twrFreq: "126.350" },
-      egnm: { name: "Leeds Bradford",        icao: "EGNM", thrLat: 53.8614, thrLon: -1.6517, heading: 320, rwy: "32",  atcName: "Leeds Radar",      twrName: "Leeds Tower",    altMeters: 208, appFreq: "134.575", twrFreq: "120.300" },
-      egnx: { name: "East Midlands",         icao: "EGNX", thrLat: 52.8315, thrLon: -1.3090, heading: 270, rwy: "27",  atcName: "East Midlands Radar", twrName: "Tower",       altMeters: 93,  appFreq: "134.175", twrFreq: "124.000" },
-      egaa: { name: "Belfast International", icao: "EGAA", thrLat: 54.6628, thrLon: -6.1970, heading: 247, rwy: "25",  atcName: "Belfast Radar",    twrName: "Aldergrove Tower",altMeters: 82, appFreq: "128.500", twrFreq: "118.300" },
-      egac: { name: "George Best Belfast City",icao: "EGAC", thrLat: 54.6225, thrLon: -5.8640, heading: 221, rwy: "22", atcName: "City Approach",  twrName: "City Tower",     altMeters: 5,   appFreq: "130.850", twrFreq: "122.825" },
-      egpd: { name: "Aberdeen",              icao: "EGPD", thrLat: 57.1942, thrLon: -2.1930, heading: 341, rwy: "34",  atcName: "Aberdeen Radar",   twrName: "Aberdeen Tower", altMeters: 66, appFreq: "119.050", twrFreq: "118.100" },
-      egff: { name: "Cardiff",               icao: "EGFF", thrLat: 51.3932, thrLon: -3.3280, heading: 300, rwy: "30",  atcName: "Cardiff Radar",    twrName: "Cardiff Tower",  altMeters: 67, appFreq: "119.150", twrFreq: "133.100" },
-      egte: { name: "Exeter",                icao: "EGTE", thrLat: 50.7360, thrLon: -3.3985, heading: 257, rwy: "26",  atcName: "Exeter Approach",  twrName: "Exeter Tower",   altMeters: 31, appFreq: "128.975", twrFreq: "119.800" },
-      eghi: { name: "Southampton",           icao: "EGHI", thrLat: 50.9575, thrLon: -1.3525, heading: 202, rwy: "20",  atcName: "Southampton Radar",twrName: "Tower",          altMeters: 13, appFreq: "122.725", twrFreq: "118.200" },
-      eghh: { name: "Bournemouth",           icao: "EGHH", thrLat: 50.7818, thrLon: -1.8285, heading: 257, rwy: "26",  atcName: "Bournemouth Radar",twrName: "Tower",          altMeters: 12, appFreq: "119.475", twrFreq: "125.600" },
-      egsh: { name: "Norwich",               icao: "EGSH", thrLat: 52.6761, thrLon:  1.2965, heading: 268, rwy: "27",  atcName: "Norwich Radar",    twrName: "Norwich Tower",  altMeters: 36, appFreq: "119.350", twrFreq: "124.250" },
-      egpe: { name: "Inverness",             icao: "EGPE", thrLat: 57.5450, thrLon: -4.0325, heading: 231, rwy: "23",  atcName: "Inverness Approach",twrName: "Tower",         altMeters: 9,   appFreq: "122.600", twrFreq: "118.400" },
-      egsc: { name: "Cambridge City",        icao: "EGSC", thrLat: 52.2095, thrLon:  0.1870, heading: 231, rwy: "23",  atcName: "Cambridge Approach",twrName: "Tower",         altMeters: 15, appFreq: "120.900", twrFreq: "125.900" },
-      egns: { name: "Isle of Man (Ronaldsway)", icao: "EGNS", thrLat: 54.0850, thrLon: -4.6105, heading: 258, rwy: "26", atcName: "Isle of Man Approach", twrName: "Tower",    altMeters: 16, appFreq: "135.900", twrFreq: "118.900" },
-      egjb: { name: "Guernsey",              icao: "EGJB", thrLat: 49.4352, thrLon: -2.5895, heading: 268, rwy: "27",  atcName: "Guernsey Approach",twrName: "Guernsey Tower", altMeters: 102, appFreq: "128.650", twrFreq: "119.950" },
-      egjj: { name: "Jersey",                icao: "EGJJ", thrLat: 49.2078, thrLon: -2.1800, heading: 261, rwy: "26",  atcName: "Jersey Approach",  twrName: "Jersey Tower",   altMeters: 84, appFreq: "120.450", twrFreq: "119.450" }
+      egll: { 
+        name: "London Heathrow", icao: "EGLL", rwy: "27R", 
+        thrLat: 51.47754, thrLon: -0.43340, 
+        endLat: 51.47738, endLon: -0.48950,
+        atcName: "Heathrow Director", twrName: "Heathrow Tower", altMeters: 25, appFreq: "119.725", twrFreq: "118.500" 
+      },
+      egkk: { 
+        name: "London Gatwick", icao: "EGKK", rwy: "26L", 
+        thrLat: 51.15655, thrLon: -0.16075, 
+        endLat: 51.15120, endLon: -0.20780,
+        atcName: "Gatwick Director", twrName: "Gatwick Tower", altMeters: 62, appFreq: "126.825", twrFreq: "124.225" 
+      },
+      egss: { 
+        name: "London Stansted", icao: "EGSS", rwy: "22",  
+        thrLat: 51.89530, thrLon: 0.25410, 
+        endLat: 51.87670, endLon: 0.22380,
+        atcName: "Stansted Radar", twrName: "Stansted Tower", altMeters: 106, appFreq: "120.625", twrFreq: "123.800" 
+      },
+      eggw: { 
+        name: "London Luton", icao: "EGGW", rwy: "26",  
+        thrLat: 51.87670, thrLon: -0.35240, 
+        endLat: 51.87270, endLon: -0.38420,
+        atcName: "Luton Radar", twrName: "Luton Tower", altMeters: 160, appFreq: "129.550", twrFreq: "132.550" 
+      },
+      eglc: { 
+        name: "London City", icao: "EGLC", rwy: "27",  
+        thrLat: 51.50505, thrLon: 0.06450, 
+        endLat: 51.50555, endLon: 0.04600,
+        atcName: "Thames Radar", twrName: "City Tower", altMeters: 6, appFreq: "132.700", twrFreq: "118.075" 
+      },
+      egcc: { 
+        name: "Manchester", icao: "EGCC", rwy: "23R", 
+        thrLat: 53.36380, thrLon: -2.25700, 
+        endLat: 53.34350, endLon: -2.29300,
+        atcName: "Manchester Radar", twrName: "Manchester Tower", altMeters: 78, appFreq: "118.575", twrFreq: "118.625" 
+      },
+      egbb: { 
+        name: "Birmingham", icao: "EGBB", rwy: "33",  
+        thrLat: 52.44390, thrLon: -1.73750, 
+        endLat: 52.46450, endLon: -1.75850,
+        atcName: "Birmingham Radar", twrName: "Birmingham Tower", altMeters: 100, appFreq: "131.000", twrFreq: "118.300" 
+      },
+      egph: { 
+        name: "Edinburgh", icao: "EGPH", rwy: "24",  
+        thrLat: 55.95500, thrLon: -3.35120, 
+        endLat: 55.94500, endLon: -3.39350,
+        atcName: "Edinburgh Radar", twrName: "Edinburgh Tower", altMeters: 41, appFreq: "121.200", twrFreq: "118.700" 
+      },
+      egpf: { 
+        name: "Glasgow", icao: "EGPF", rwy: "23",  
+        thrLat: 55.87720, thrLon: -4.41720, 
+        endLat: 55.86650, endLon: -4.44900,
+        atcName: "Glasgow Radar", twrName: "Glasgow Tower", altMeters: 8, appFreq: "119.100", twrFreq: "118.800" 
+      },
+      eggd: { 
+        name: "Bristol", icao: "EGGD", rwy: "27",  
+        thrLat: 51.38280, thrLon: -2.70420, 
+        endLat: 51.38260, endLon: -2.73400,
+        atcName: "Bristol Radar", twrName: "Bristol Tower", altMeters: 190, appFreq: "125.650", twrFreq: "133.850" 
+      },
+      egnt: { 
+        name: "Newcastle", icao: "EGNT", rwy: "25",  
+        thrLat: 55.04220, thrLon: -1.67600, 
+        endLat: 55.03280, endLon: -1.70750,
+        atcName: "Newcastle Radar", twrName: "Newcastle Tower", altMeters: 81, appFreq: "124.375", twrFreq: "119.700" 
+      },
+      eggp: { 
+        name: "Liverpool John Lennon", icao: "EGGP", rwy: "27",  
+        thrLat: 53.33380, thrLon: -2.83350, 
+        endLat: 53.33350, endLon: -2.86600,
+        atcName: "Liverpool Radar", twrName: "Liverpool Tower", altMeters: 25, appFreq: "119.850", twrFreq: "126.350" 
+      },
+      egnm: { 
+        name: "Leeds Bradford", icao: "EGNM", rwy: "32",  
+        thrLat: 53.86140, thrLon: -1.65170, 
+        endLat: 53.87050, endLon: -1.66950,
+        atcName: "Leeds Radar", twrName: "Leeds Tower", altMeters: 208, appFreq: "134.575", twrFreq: "120.300" 
+      },
+      egnx: { 
+        name: "East Midlands", icao: "EGNX", rwy: "27",  
+        thrLat: 52.83150, thrLon: -1.30900, 
+        endLat: 52.83080, endLon: -1.34750,
+        atcName: "East Midlands Radar", twrName: "Tower", altMeters: 93, appFreq: "134.175", twrFreq: "124.000" 
+      },
+      egaa: { 
+        name: "Belfast International", icao: "EGAA", rwy: "25",  
+        thrLat: 54.66280, thrLon: -6.19700, 
+        endLat: 54.65220, endLon: -6.23450,
+        atcName: "Belfast Radar", twrName: "Aldergrove Tower", altMeters: 82, appFreq: "128.500", twrFreq: "118.300" 
+      },
+      egac: { 
+        name: "George Best Belfast City", icao: "EGAC", rwy: "22", 
+        thrLat: 54.62250, thrLon: -5.86400, 
+        endLat: 54.61380, endLon: -5.88100,
+        atcName: "City Approach", twrName: "City Tower", altMeters: 5, appFreq: "130.850", twrFreq: "122.825" 
+      },
+      egpd: { 
+        name: "Aberdeen", icao: "EGPD", rwy: "34",  
+        thrLat: 57.19420, thrLon: -2.19300, 
+        endLat: 57.20950, endLon: -2.20250,
+        atcName: "Aberdeen Radar", twrName: "Aberdeen Tower", altMeters: 66, appFreq: "119.050", twrFreq: "118.100" 
+      },
+      egff: { 
+        name: "Cardiff", icao: "EGFF", rwy: "30",  
+        thrLat: 51.39320, thrLon: -3.32800, 
+        endLat: 51.40020, endLon: -3.35850,
+        atcName: "Cardiff Radar", twrName: "Cardiff Tower", altMeters: 67, appFreq: "119.150", twrFreq: "133.100" 
+      },
+      egte: { 
+        name: "Exeter", icao: "EGTE", rwy: "26",  
+        thrLat: 50.73600, thrLon: -3.39850, 
+        endLat: 50.73280, endLon: -3.42900,
+        atcName: "Exeter Approach", twrName: "Exeter Tower", altMeters: 31, appFreq: "128.975", twrFreq: "119.800" 
+      },
+      eghi: { 
+        name: "Southampton", icao: "EGHI", rwy: "20",  
+        thrLat: 50.95750, thrLon: -1.35250, 
+        endLat: 50.94300, endLon: -1.36100,
+        atcName: "Southampton Radar", twrName: "Tower", altMeters: 13, appFreq: "122.725", twrFreq: "118.200" 
+      },
+      eghh: { 
+        name: "Bournemouth", icao: "EGHH", rwy: "26",  
+        thrLat: 50.78180, thrLon: -1.82850, 
+        endLat: 50.77820, endLon: -1.86150,
+        atcName: "Bournemouth Radar", twrName: "Tower", altMeters: 12, appFreq: "119.475", twrFreq: "125.600" 
+      },
+      egsh: { 
+        name: "Norwich", icao: "EGSH", rwy: "27",  
+        thrLat: 52.67610, thrLon: 1.29650, 
+        endLat: 52.67550, endLon: 1.26900,
+        atcName: "Norwich Radar", twrName: "Norwich Tower", altMeters: 36, appFreq: "119.350", twrFreq: "124.250" 
+      },
+      egpe: { 
+        name: "Inverness", icao: "EGPE", rwy: "23",  
+        thrLat: 57.54500, thrLon: -4.03250, 
+        endLat: 57.53500, endLon: -4.06250,
+        atcName: "Inverness Approach", twrName: "Tower", altMeters: 9, appFreq: "122.600", twrFreq: "118.400" 
+      },
+      egsc: { 
+        name: "Cambridge City", icao: "EGSC", rwy: "23",  
+        thrLat: 52.20950, thrLon: 0.18700, 
+        endLat: 52.20050, endLon: 0.16300,
+        atcName: "Cambridge Approach", twrName: "Tower", altMeters: 15, appFreq: "120.900", twrFreq: "125.900" 
+      },
+      egns: { 
+        name: "Isle of Man (Ronaldsway)", icao: "EGNS", rwy: "26", 
+        thrLat: 54.08500, thrLon: -4.61050, 
+        endLat: 54.08150, endLon: -4.63750,
+        atcName: "Isle of Man Approach", twrName: "Tower", altMeters: 16, appFreq: "135.900", twrFreq: "118.900" 
+      },
+      egjb: { 
+        name: "Guernsey", icao: "EGJB", rwy: "27",  
+        thrLat: 49.43520, thrLon: -2.58950, 
+        endLat: 49.43480, endLon: -2.61000,
+        atcName: "Guernsey Approach", twrName: "Guernsey Tower", altMeters: 102, appFreq: "128.650", twrFreq: "119.950" 
+      },
+      egjj: { 
+        name: "Jersey", icao: "EGJJ", rwy: "26",  
+        thrLat: 49.20780, thrLon: -2.18000, 
+        endLat: 49.20780, endLon: -2.20900,
+        atcName: "Jersey Approach", twrName: "Jersey Tower", altMeters: 84, appFreq: "120.450", twrFreq: "119.450" 
+      }
     };
 
     const engineFireSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
@@ -565,18 +694,6 @@
     viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
     viewer.clock.multiplier = 1.0;
 
-    function calculateDestination(lat, lon, bearingDeg, distanceMeters) {
-      const R = 6371000;
-      const rad = Math.PI / 180;
-      const rLat = lat * rad;
-      const rLon = lon * rad;
-      const rBearing = bearingDeg * rad;
-      const dR = distanceMeters / R;
-      const nLat = Math.asin(Math.sin(rLat) * Math.cos(dR) + Math.cos(rLat) * Math.sin(dR) * Math.cos(rBearing));
-      const nLon = rLon + Math.atan2(Math.sin(rBearing) * Math.sin(dR) * Math.cos(rLat), Math.cos(dR) - Math.sin(rLat) * Math.sin(nLat));
-      return { lat: nLat / rad, lon: nLon / rad };
-    }
-
     function generateNormalDialogue(ap) {
       const fieldElevationFt = ap.altMeters * 3.28084;
       const assignedAltFt = Math.round((3000 + fieldElevationFt) / 100) * 100;
@@ -589,9 +706,9 @@
         { s: 32, phase: "Glidepath Intercept", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, roger. Maintain 150 knots to 4 DME. Contact ${ap.twrName} on ${ap.twrFreq}.` },
         { s: 40, phase: "Glidepath Intercept", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `150 to 4, over to Tower on ${ap.twrFreq}, good day. Speedbird 3.` },
         { s: 55, phase: "Established 4 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `${ap.twrName}, Speedbird 3 fully established Runway ${ap.rwy}, 4 miles out.` },
-        { s: 62, phase: "Established 4 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, ${ap.twrName}, welcome. Continue approach Runway ${ap.rwy}, wind ${ap.heading - 10} degrees at 8 knots.` },
+        { s: 62, phase: "Established 4 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, ${ap.twrName}, welcome. Continue approach Runway ${ap.rwy}, wind variable 5 knots.` },
         { s: 80, phase: "Short Final 2 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Speedbird 3, 2 miles, gear down and locked, flaps full, landing checks complete.` },
-        { s: 88, phase: "Short Final 2 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, wind ${(ap.heading + 5) % 360} degrees at 9 knots, Runway ${ap.rwy} cleared to land.` },
+        { s: 88, phase: "Short Final 2 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, Runway ${ap.rwy} cleared to land.` },
         { s: 96, phase: "Short Final 2 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3.` },
         { s: 111, phase: "Threshold Crossing", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Passing threshold, 50... 30... 10... Retard.` },
         { s: 118, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Touchdown on centerline, thrust reverse normal, braking.` },
@@ -601,9 +718,7 @@
     }
 
     function loadAirport(key) {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
 
       activeEmergency = 'none';
       currentAirportKey = key;
@@ -614,28 +729,38 @@
       displayedCommIndices.clear();
       document.getElementById("comms-log").innerHTML = "";
 
-      const reciprocalHeading = (ap.heading + 180) % 360;
       const visualGroundZ = 2.0;
 
-      const rawWaypoints = [
-        { s: 0,   dist: 11075, z: visualGroundZ + 580 },
-        { s: 30,  dist: 7535,  z: visualGroundZ + 387 },
-        { s: 60,  dist: 4535,  z: visualGroundZ + 231 },
-        { s: 90,  dist: 1925,  z: visualGroundZ + 97 },
-        { s: 110, dist: 385,   z: visualGroundZ + 25 },
-        { s: 114, dist: 0,     z: visualGroundZ + 15 },
-        { s: 118, dist: -300,  z: visualGroundZ },
-        { s: 130, dist: -750,  z: visualGroundZ },
-        { s: 145, dist: -1100, z: visualGroundZ },
-        { s: 160, dist: -1300, z: visualGroundZ },
-        { s: 180, dist: -1300, z: visualGroundZ }
-      ];
+      // 1. Convert physical surveyed runway coordinates directly to Cartesian vectors
+      const thrCart = Cesium.Cartesian3.fromDegrees(ap.thrLon, ap.thrLat, visualGroundZ);
+      const endCart = Cesium.Cartesian3.fromDegrees(ap.endLon, ap.endLat, visualGroundZ);
 
-      const waypoints = rawWaypoints.map(wp => {
-        const bearing = wp.dist >= 0 ? reciprocalHeading : ap.heading;
-        const coords = calculateDestination(ap.thrLat, ap.thrLon, bearing, Math.abs(wp.dist));
-        return { s: wp.s, lon: coords.lon, lat: coords.lat, z: wp.z };
-      });
+      // 2. Derive true 3D unit vector aligned with the runway centerline
+      const rwyVector = new Cesium.Cartesian3();
+      Cesium.Cartesian3.subtract(endCart, thrCart, rwyVector);
+      const rwyLength = Cesium.Cartesian3.magnitude(rwyVector);
+      const rwyUnit = new Cesium.Cartesian3();
+      Cesium.Cartesian3.normalize(rwyVector, rwyUnit);
+
+      // Local ellipsoidal Up vector at threshold
+      const upUnit = new Cesium.Cartesian3();
+      Cesium.Ellipsoid.WGS84.geodeticSurfaceNormal(thrCart, upUnit);
+
+      // Exact linear waypoints along centerline vector:
+      // distOffset is displacement along rwyUnit from threshold (negative is approach, positive is down the runway)
+      const rawWaypoints = [
+        { s: 0,   distOffset: -11075, altAboveGround: 580 },
+        { s: 30,  distOffset: -7535,  altAboveGround: 387 },
+        { s: 60,  distOffset: -4535,  altAboveGround: 231 },
+        { s: 90,  distOffset: -1925,  altAboveGround: 97  },
+        { s: 110, distOffset: -385,   altAboveGround: 25  },
+        { s: 114, distOffset: 0,      altAboveGround: 15  }, // Crossing physical threshold
+        { s: 118, distOffset: 300,    altAboveGround: 0   }, // Touchdown on centerline (300m past threshold)
+        { s: 130, distOffset: 750,    altAboveGround: 0   }, // High-speed rollout
+        { s: 145, distOffset: 1100,   altAboveGround: 0   }, // Low-speed rollout
+        { s: 160, distOffset: 1300,   altAboveGround: 0   }, // Brought to complete halt
+        { s: 180, distOffset: 1300,   altAboveGround: 0   }  // Stationary hold
+      ];
 
       positionProperty = new Cesium.SampledPositionProperty();
       positionProperty.setInterpolationOptions({
@@ -643,10 +768,16 @@
         interpolationAlgorithm: Cesium.LinearApproximation
       });
 
-      waypoints.forEach(wp => {
+      rawWaypoints.forEach(wp => {
         const time = Cesium.JulianDate.addSeconds(startTime, wp.s, new Cesium.JulianDate());
-        const pos = Cesium.Cartesian3.fromDegrees(wp.lon, wp.lat, wp.z);
-        positionProperty.addSample(time, pos);
+        
+        // P = P_threshold + (distOffset * rwyUnit) + (altAboveGround * upUnit)
+        const forwardStep = Cesium.Cartesian3.multiplyByScalar(rwyUnit, wp.distOffset, new Cesium.Cartesian3());
+        const upStep = Cesium.Cartesian3.multiplyByScalar(upUnit, wp.altAboveGround, new Cesium.Cartesian3());
+        const totalPos = Cesium.Cartesian3.add(thrCart, forwardStep, new Cesium.Cartesian3());
+        Cesium.Cartesian3.add(totalPos, upStep, totalPos);
+
+        positionProperty.addSample(time, totalPos);
       });
 
       if (aircraftEntity) {
