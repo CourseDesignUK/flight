@@ -21,58 +21,189 @@
     .cesium-credit-textContainer,
     .cesium-credit-expand-link,
     .cesium-viewer-timelineContainer,
-    .cesium-viewer-animationContainer {
+    .cesium-viewer-animationContainer,
+    .cesium-viewer-navigationContainer,
+    .cesium-navigationHelpButton,
+    .cesium-sceneModePicker-wrapper,
+    .cesium-baseLayerPicker-wrapper {
       display: none !important;
       visibility: hidden !important;
       pointer-events: none !important;
     }
 
-    .overlay-panel {
+    /* Splash Screen Video Overlay */
+    #splash-container {
       position: absolute;
-      background: rgba(13, 17, 23, 0.90);
-      border: 1px solid rgba(255, 255, 255, 0.15);
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: #000;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease;
+    }
+    #splash-video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    #btn-skip-intro {
+      position: absolute;
+      bottom: 30px;
+      right: 30px;
+      z-index: 1001;
+      background: rgba(15, 23, 42, 0.6);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      padding: 8px 18px;
       border-radius: 6px;
-      padding: 12px 16px;
-      backdrop-filter: blur(10px);
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Shared Glassmorphism Profile */
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45),
+                  inset 0 1px 0 0 rgba(255, 255, 255, 0.12);
+    }
+
+    /* Consolidated Bottom Menu Bar */
+    #bottom-menu-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 58px;
+      border-radius: 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      border-bottom: none;
+      border-left: none;
+      border-right: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
       z-index: 100;
     }
-    #hud-telemetry { top: 20px; left: 20px; width: 320px; }
-    #hud-selector { top: 20px; right: 20px; width: 330px; }
-    #hud-emergencies { top: 20px; left: 350px; width: 220px; }
 
-    .hud-title {
-      font-size: 11px; text-transform: uppercase; letter-spacing: 1px;
-      color: #38bdf8; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      padding-bottom: 4px; margin-bottom: 8px; font-weight: 700;
+    .bar-section {
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .data-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 13px; }
-    .data-label { color: #94a3b8; }
-    .data-val { font-weight: 600; font-family: monospace; color: #f8fafc; }
-    
+
+    .bar-divider {
+      width: 1px;
+      height: 24px;
+      background: rgba(255, 255, 255, 0.18);
+      margin: 0 4px;
+    }
+
     select {
-      width: 100%; background: #1e293b; color: #38bdf8; border: 1px solid #0284c7;
-      padding: 8px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;
-      outline: none; margin-top: 4px;
+      background: rgba(30, 41, 59, 0.65);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 6px 10px;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+      outline: none;
+      height: 32px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    
-    #hud-controls { bottom: 30px; left: 50%; transform: translateX(-50%); display: flex; gap: 10px; align-items: center; }
+
     button {
-      background: #1e293b; color: #38bdf8; border: 1px solid #0284c7;
-      padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px;
+      background: rgba(30, 41, 59, 0.65);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      padding: 6px 12px;
+      border-radius: 5px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 12px;
+      height: 32px;
+      white-space: nowrap;
+      transition: background 0.15s ease, border-color 0.15s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-    button.active { background: #0284c7; color: #fff; }
+    button:hover:not(:disabled) { background: rgba(3, 105, 161, 0.7); color: #fff; border-color: #38bdf8; }
+    button.active { background: rgba(2, 132, 199, 0.85); color: #fff; border-color: #38bdf8; }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
 
-    .btn-danger { background: #7f1d1d; border-color: #ef4444; color: #fca5a5; width: 100%; margin-bottom: 6px; }
-    .btn-warning { background: #78350f; border-color: #f59e0b; color: #fcd34d; width: 100%; margin-bottom: 6px; }
+    .btn-danger { background: rgba(127, 29, 29, 0.65); border-color: rgba(239, 68, 68, 0.5); color: #fca5a5; }
+    .btn-danger:hover:not(:disabled) { background: rgba(153, 27, 27, 0.85); color: #fff; }
+    .btn-warning { background: rgba(120, 53, 15, 0.65); border-color: rgba(245, 158, 11, 0.5); color: #fcd34d; }
+    .btn-warning:hover:not(:disabled) { background: rgba(146, 64, 14, 0.85); color: #fff; }
 
+    /* Telemetry HUD & Comms Transcripts */
+    .overlay-panel {
+      position: absolute;
+      border-radius: 8px;
+      padding: 12px 16px;
+      z-index: 95;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    #hud-telemetry { top: 20px; left: 20px; width: 310px; }
     #hud-comms {
-      bottom: 85px;
+      bottom: 74px;
       left: 20px;
       width: 480px;
-      height: 155px;
+      height: 140px;
       display: flex;
       flex-direction: column;
     }
+
+    .hud-title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    .hud-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #38bdf8;
+      font-weight: 700;
+    }
+
+    .hud-close-btn {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 16px;
+      line-height: 1;
+      height: auto;
+      padding: 0 2px;
+      cursor: pointer;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+    .hud-close-btn:hover {
+      color: #ef4444;
+      background: transparent;
+    }
+
+    .data-row { display: flex; justify-content: space-between; margin: 4px 0; font-size: 12.5px; }
+    .data-label { color: #94a3b8; }
+    .data-val { font-weight: 600; font-family: monospace; color: #f8fafc; }
+
     #comms-log {
       flex: 1;
       overflow-y: auto;
@@ -85,11 +216,7 @@
       padding-right: 4px;
       scroll-behavior: smooth;
     }
-    .comm-line {
-      display: flex;
-      gap: 6px;
-      word-break: break-word;
-    }
+    .comm-line { display: flex; gap: 6px; word-break: break-word; }
     .comm-time { color: #64748b; flex-shrink: 0; }
     .comm-sender-atc { color: #38bdf8; font-weight: 700; flex-shrink: 0; }
     .comm-sender-pilot { color: #4ade80; font-weight: 700; flex-shrink: 0; }
@@ -103,17 +230,20 @@
       z-index: 90;
     }
     .hud-reticle-svg {
-      width: 100%;
-      height: 100%;
-      stroke: #00ff66;
-      fill: none;
-      stroke-width: 1.5;
-      font-family: monospace;
-      font-size: 12px;
+      width: 100%; height: 100%;
+      stroke: #00ff66; fill: none; stroke-width: 1.5;
+      font-family: monospace; font-size: 12px;
     }
   </style>
 </head>
 <body>
+  <div id="splash-container">
+    <video id="splash-video" playsinline preload="auto">
+      <source src="intro.mp4" type="video/mp4" />
+    </video>
+    <button id="btn-skip-intro">Skip Intro</button>
+  </div>
+
   <div id="cesiumContainer"></div>
 
   <div id="cockpit-hud-overlay">
@@ -151,8 +281,11 @@
     </svg>
   </div>
 
-  <div id="hud-telemetry" class="overlay-panel">
-    <div class="hud-title" id="hud-station-title">Airport Telemetry</div>
+  <div id="hud-telemetry" class="overlay-panel glass-panel">
+    <div class="hud-title-bar">
+      <span class="hud-title" id="hud-station-title">Airport Telemetry</span>
+      <button class="hud-close-btn" id="btn-close-telemetry" title="Close Telemetry Panel">&times;</button>
+    </div>
     <div class="data-row"><span class="data-label">Callsign:</span><span class="data-val">SPEEDBIRD 3</span></div>
     <div class="data-row"><span class="data-label">Phase:</span><span class="data-val" id="hud-approach">6-mile Final</span></div>
     <div class="data-row"><span class="data-label">Altitude:</span><span class="data-val" id="hud-alt">-- ft</span></div>
@@ -161,41 +294,90 @@
     <div class="data-row"><span class="data-label">Coordinates:</span><span class="data-val" id="hud-coords">-- , --</span></div>
   </div>
 
-  <div id="hud-emergencies" class="overlay-panel">
-    <div class="hud-title">Failures</div>
-    <button id="btn-em-fire" class="btn-danger">Engine Fire</button>
-    <button id="btn-em-fumes" class="btn-danger">Cockpit Fumes</button>
-    <button id="btn-em-gear" class="btn-warning">Stuck Gear</button>
-  </div>
-
-  <div id="hud-selector" class="overlay-panel">
-    <div class="hud-title">Select UK Commercial Airport</div>
-    <select id="airfieldSelect"></select>
-  </div>
-
-  <div id="hud-comms" class="overlay-panel">
-    <div class="hud-title" style="display:flex; justify-content:space-between;">
-      <span id="comms-title">VHF COM: APPROACH</span>
-      <span style="color:#22c55e;">LIVE TRANSCRIPT</span>
+  <div id="hud-comms" class="overlay-panel glass-panel">
+    <div class="hud-title-bar">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <span class="hud-title" id="comms-title">VHF COM: APPROACH</span>
+        <span style="color:#22c55e; font-size:10px; font-weight:700;">LIVE</span>
+      </div>
+      <button class="hud-close-btn" id="btn-close-comms" title="Close Comms Panel">&times;</button>
     </div>
     <div id="comms-log"></div>
   </div>
 
-  <div id="hud-controls" class="overlay-panel">
-    <button id="btn-playpause">Pause</button>
-    <button id="btn-chase" class="active">Chase Cam</button>
-    <button id="btn-cockpit">Cockpit View</button>
-    <button id="btn-tower">Tower View</button>
-    <button id="btn-free">Free Orbit</button>
-    <button id="btn-lighting">Night Mode</button>
-    <select id="speedSelect" style="width: auto; margin-top: 0; margin-left: 5px;">
-      <option value="1">1x Speed</option>
-      <option value="2">2x Speed</option>
-      <option value="4">4x Speed</option>
-    </select>
+  <div id="bottom-menu-bar" class="glass-panel">
+    <div class="bar-section">
+      <select id="airfieldSelect" title="Select Airfield"></select>
+    </div>
+
+    <div class="bar-divider"></div>
+
+    <div class="bar-section">
+      <button id="btn-playpause">Pause</button>
+      <button id="btn-chase" class="active">Chase</button>
+      <button id="btn-cockpit">Cockpit</button>
+      <button id="btn-tower">Tower</button>
+      <button id="btn-free">Free</button>
+    </div>
+
+    <div class="bar-divider"></div>
+
+    <div class="bar-section">
+      <button id="btn-toggle-telemetry" class="active" title="Toggle Telemetry Overlay">Telemetry</button>
+      <button id="btn-toggle-comms" class="active" title="Toggle Comms Overlay">Dialogue</button>
+      <button id="btn-em-fire" class="btn-danger">Engine Fire</button>
+      <button id="btn-em-fumes" class="btn-danger">Cockpit Fumes</button>
+      <button id="btn-em-gear" class="btn-warning">Stuck Gear</button>
+    </div>
   </div>
 
   <script>
+    const splash = document.getElementById("splash-container");
+    const splashVideo = document.getElementById("splash-video");
+    const btnSkipIntro = document.getElementById("btn-skip-intro");
+
+    function dismissSplash() {
+      if (splash.style.display === "none") return;
+      splash.style.opacity = "0";
+      setTimeout(() => {
+        splashVideo.pause();
+        splash.style.display = "none";
+      }, 800);
+    }
+
+    splashVideo.addEventListener("ended", dismissSplash);
+    btnSkipIntro.addEventListener("click", dismissSplash);
+    splashVideo.play().catch(() => {});
+
+    const panelTelemetry = document.getElementById("hud-telemetry");
+    const panelComms = document.getElementById("hud-comms");
+    const btnToggleTelemetry = document.getElementById("btn-toggle-telemetry");
+    const btnToggleComms = document.getElementById("btn-toggle-comms");
+    const btnCloseTelemetry = document.getElementById("btn-close-telemetry");
+    const btnCloseComms = document.getElementById("btn-close-comms");
+
+    function setPanelVisible(panel, toggleBtn, visible) {
+      panel.style.display = visible ? (panel.id === "hud-comms" ? "flex" : "block") : "none";
+      if (visible) {
+        toggleBtn.classList.add("active");
+      } else {
+        toggleBtn.classList.remove("active");
+      }
+    }
+
+    btnCloseTelemetry.addEventListener("click", () => setPanelVisible(panelTelemetry, btnToggleTelemetry, false));
+    btnCloseComms.addEventListener("click", () => setPanelVisible(panelComms, btnToggleComms, false));
+
+    btnToggleTelemetry.addEventListener("click", () => {
+      const isVisible = panelTelemetry.style.display !== "none";
+      setPanelVisible(panelTelemetry, btnToggleTelemetry, !isVisible);
+    });
+
+    btnToggleComms.addEventListener("click", () => {
+      const isVisible = panelComms.style.display !== "none";
+      setPanelVisible(panelComms, btnToggleComms, !isVisible);
+    });
+
     const viewer = new Cesium.Viewer("cesiumContainer", {
       baseLayer: new Cesium.ImageryLayer(
         new Cesium.UrlTemplateImageryProvider({
@@ -206,6 +388,7 @@
       baseLayerPicker: false,
       geocoder: false,
       homeButton: false,
+      sceneModePicker: false,
       infoBox: false,
       selectionIndicator: false,
       navigationHelpButton: false,
@@ -219,46 +402,42 @@
     viewer.scene.highDynamicRange = false;
 
     const airports = {
-      egll: { name: "London Heathrow",      icao: "EGLL", lat: 51.4774, lon: -0.4580, heading: 270, rwy: "27R", atcName: "Heathrow Director", twrName: "Heathrow Tower", altMeters: 25, appFreq: "119.725", twrFreq: "118.500" },
-      egkk: { name: "London Gatwick",       icao: "EGKK", lat: 51.1537, lon: -0.1821, heading: 260, rwy: "26L", atcName: "Gatwick Director",  twrName: "Gatwick Tower",  altMeters: 62, appFreq: "126.825", twrFreq: "124.225" },
-      egss: { name: "London Stansted",      icao: "EGSS", lat: 51.8860, lon:  0.2389, heading: 220, rwy: "22",  atcName: "Stansted Radar",    twrName: "Stansted Tower", altMeters: 106, appFreq: "120.625", twrFreq: "123.800" },
-      eggw: { name: "London Luton",         icao: "EGGW", lat: 51.8747, lon: -0.3683, heading: 260, rwy: "26",  atcName: "Luton Radar",       twrName: "Luton Tower",    altMeters: 160, appFreq: "129.550", twrFreq: "132.550" },
-      eglc: { name: "London City",          icao: "EGLC", lat: 51.5053, lon:  0.0553, heading: 270, rwy: "27",  atcName: "Thames Radar",      twrName: "City Tower",     altMeters: 6,   appFreq: "132.700", twrFreq: "118.075" },
-      egcc: { name: "Manchester",           icao: "EGCC", lat: 53.3537, lon: -2.2750, heading: 230, rwy: "23R", atcName: "Manchester Radar", twrName: "Manchester Tower",altMeters: 78, appFreq: "118.575", twrFreq: "118.625" },
-      egbb: { name: "Birmingham",           icao: "EGBB", lat: 52.4539, lon: -1.7480, heading: 330, rwy: "33",  atcName: "Birmingham Radar", twrName: "Birmingham Tower",altMeters: 100, appFreq: "131.000", twrFreq: "118.300" },
-      egph: { name: "Edinburgh",            icao: "EGPH", lat: 55.9500, lon: -3.3725, heading: 240, rwy: "24",  atcName: "Edinburgh Radar",  twrName: "Edinburgh Tower",altMeters: 41, appFreq: "121.200", twrFreq: "118.700" },
-      egpf: { name: "Glasgow",              icao: "EGPF", lat: 55.8719, lon: -4.4331, heading: 230, rwy: "23",  atcName: "Glasgow Radar",    twrName: "Glasgow Tower",  altMeters: 8,   appFreq: "119.100", twrFreq: "118.800" },
-      eggd: { name: "Bristol",              icao: "EGGD", lat: 51.3827, lon: -2.7191, heading: 270, rwy: "27",  atcName: "Bristol Radar",    twrName: "Bristol Tower",  altMeters: 190, appFreq: "125.650", twrFreq: "133.850" },
-      egnt: { name: "Newcastle",            icao: "EGNT", lat: 55.0375, lon: -1.6917, heading: 250, rwy: "25",  atcName: "Newcastle Radar",  twrName: "Newcastle Tower",altMeters: 81, appFreq: "124.375", twrFreq: "119.700" },
-      eggp: { name: "Liverpool John Lennon",icao: "EGGP", lat: 53.3336, lon: -2.8497, heading: 270, rwy: "27",  atcName: "Liverpool Radar",  twrName: "Liverpool Tower",altMeters: 25, appFreq: "119.850", twrFreq: "126.350" },
-      egnm: { name: "Leeds Bradford",       icao: "EGNM", lat: 53.8659, lon: -1.6606, heading: 320, rwy: "32",  atcName: "Leeds Radar",      twrName: "Leeds Tower",    altMeters: 208, appFreq: "134.575", twrFreq: "120.300" },
-      egnx: { name: "East Midlands",        icao: "EGNX", lat: 52.8311, lon: -1.3281, heading: 270, rwy: "27",  atcName: "East Midlands Radar", twrName: "Tower",       altMeters: 93,  appFreq: "134.175", twrFreq: "124.000" },
-      egaa: { name: "Belfast International",icao: "EGAA", lat: 54.6575, lon: -6.2158, heading: 250, rwy: "25",  atcName: "Belfast Radar",    twrName: "Aldergrove Tower",altMeters: 82, appFreq: "128.500", twrFreq: "118.300" },
-      egac: { name: "George Best Belfast City",icao: "EGAC", lat: 54.6181, lon: -5.8725, heading: 220, rwy: "22", atcName: "City Approach",  twrName: "City Tower",     altMeters: 5,   appFreq: "130.850", twrFreq: "122.825" },
-      egpd: { name: "Aberdeen",             icao: "EGPD", lat: 57.2019, lon: -2.1978, heading: 340, rwy: "34",  atcName: "Aberdeen Radar",   twrName: "Aberdeen Tower", altMeters: 66, appFreq: "119.050", twrFreq: "118.100" },
-      egff: { name: "Cardiff",              icao: "EGFF", lat: 51.3967, lon: -3.3433, heading: 300, rwy: "30",  atcName: "Cardiff Radar",    twrName: "Cardiff Tower",  altMeters: 67, appFreq: "119.150", twrFreq: "133.100" },
-      egte: { name: "Exeter",               icao: "EGTE", lat: 50.7344, lon: -3.4139, heading: 260, rwy: "26",  atcName: "Exeter Approach",  twrName: "Exeter Tower",   altMeters: 31, appFreq: "128.975", twrFreq: "119.800" },
-      eghi: { name: "Southampton",          icao: "EGHI", lat: 50.9503, lon: -1.3568, heading: 200, rwy: "20",  atcName: "Southampton Radar",twrName: "Tower",          altMeters: 13, appFreq: "122.725", twrFreq: "118.200" },
-      eghh: { name: "Bournemouth",          icao: "EGHH", lat: 50.7800, lon: -1.8425, heading: 260, rwy: "26",  atcName: "Bournemouth Radar",twrName: "Tower",          altMeters: 12, appFreq: "119.475", twrFreq: "125.600" },
-      egsh: { name: "Norwich",              icao: "EGSH", lat: 52.6758, lon:  1.2828, heading: 270, rwy: "27",  atcName: "Norwich Radar",    twrName: "Norwich Tower",  altMeters: 36, appFreq: "119.350", twrFreq: "124.250" },
-      egpe: { name: "Inverness",            icao: "EGPE", lat: 57.5400, lon: -4.0475, heading: 230, rwy: "23",  atcName: "Inverness Approach",twrName: "Tower",         altMeters: 9,   appFreq: "122.600", twrFreq: "118.400" },
-      egsc: { name: "Cambridge City",       icao: "EGSC", lat: 52.2050, lon:  0.1750, heading: 230, rwy: "23",  atcName: "Cambridge Approach",twrName: "Tower",         altMeters: 15, appFreq: "120.900", twrFreq: "125.900" },
-      egns: { name: "Isle of Man (Ronaldsway)", icao: "EGNS", lat: 54.0833, lon: -4.6239, heading: 260, rwy: "26", atcName: "Isle of Man Approach", twrName: "Tower",    altMeters: 16, appFreq: "135.900", twrFreq: "118.900" },
-      egjb: { name: "Guernsey",             icao: "EGJB", lat: 49.4350, lon: -2.6003, heading: 270, rwy: "27",  atcName: "Guernsey Approach",twrName: "Guernsey Tower", altMeters: 102, appFreq: "128.650", twrFreq: "119.950" },
-      egjj: { name: "Jersey",               icao: "EGJJ", lat: 49.2078, lon: -2.1956, heading: 260, rwy: "26",  atcName: "Jersey Approach",  twrName: "Jersey Tower",   altMeters: 84, appFreq: "120.450", twrFreq: "119.450" }
+      egll: { name: "London Heathrow",       icao: "EGLL", thrLat: 51.4776, thrLon: -0.4332, heading: 270, rwy: "27R", atcName: "Heathrow Director", twrName: "Heathrow Tower", altMeters: 25, appFreq: "119.725", twrFreq: "118.500" },
+      egkk: { name: "London Gatwick",        icao: "EGKK", thrLat: 51.1565, thrLon: -0.1607, heading: 260, rwy: "26L", atcName: "Gatwick Director",  twrName: "Gatwick Tower",  altMeters: 62, appFreq: "126.825", twrFreq: "124.225" },
+      egss: { name: "London Stansted",       icao: "EGSS", thrLat: 51.8953, thrLon:  0.2541, heading: 224, rwy: "22",  atcName: "Stansted Radar",    twrName: "Stansted Tower", altMeters: 106, appFreq: "120.625", twrFreq: "123.800" },
+      eggw: { name: "London Luton",          icao: "EGGW", thrLat: 51.8767, thrLon: -0.3524, heading: 257, rwy: "26",  atcName: "Luton Radar",       twrName: "Luton Tower",    altMeters: 160, appFreq: "129.550", twrFreq: "132.550" },
+      eglc: { name: "London City",           icao: "EGLC", thrLat: 51.5050, thrLon:  0.0645, heading: 273, rwy: "27",  atcName: "Thames Radar",      twrName: "City Tower",     altMeters: 6,   appFreq: "132.700", twrFreq: "118.075" },
+      egcc: { name: "Manchester",            icao: "EGCC", thrLat: 53.3638, thrLon: -2.2570, heading: 232, rwy: "23R", atcName: "Manchester Radar", twrName: "Manchester Tower",altMeters: 78, appFreq: "118.575", twrFreq: "118.625" },
+      egbb: { name: "Birmingham",            icao: "EGBB", thrLat: 52.4439, thrLon: -1.7375, heading: 331, rwy: "33",  atcName: "Birmingham Radar", twrName: "Birmingham Tower",altMeters: 100, appFreq: "131.000", twrFreq: "118.300" },
+      egph: { name: "Edinburgh",             icao: "EGPH", thrLat: 55.9550, thrLon: -3.3512, heading: 236, rwy: "24",  atcName: "Edinburgh Radar",  twrName: "Edinburgh Tower",altMeters: 41, appFreq: "121.200", twrFreq: "118.700" },
+      egpf: { name: "Glasgow",               icao: "EGPF", thrLat: 55.8772, thrLon: -4.4172, heading: 230, rwy: "23",  atcName: "Glasgow Radar",    twrName: "Glasgow Tower",  altMeters: 8,   appFreq: "119.100", twrFreq: "118.800" },
+      eggd: { name: "Bristol",               icao: "EGGD", thrLat: 51.3828, thrLon: -2.7042, heading: 268, rwy: "27",  atcName: "Bristol Radar",    twrName: "Bristol Tower",  altMeters: 190, appFreq: "125.650", twrFreq: "133.850" },
+      egnt: { name: "Newcastle",             icao: "EGNT", thrLat: 55.0422, thrLon: -1.6760, heading: 252, rwy: "25",  atcName: "Newcastle Radar",  twrName: "Newcastle Tower",altMeters: 81, appFreq: "124.375", twrFreq: "119.700" },
+      eggp: { name: "Liverpool John Lennon", icao: "EGGP", thrLat: 53.3338, thrLon: -2.8335, heading: 268, rwy: "27",  atcName: "Liverpool Radar",  twrName: "Liverpool Tower",altMeters: 25, appFreq: "119.850", twrFreq: "126.350" },
+      egnm: { name: "Leeds Bradford",        icao: "EGNM", thrLat: 53.8614, thrLon: -1.6517, heading: 320, rwy: "32",  atcName: "Leeds Radar",      twrName: "Leeds Tower",    altMeters: 208, appFreq: "134.575", twrFreq: "120.300" },
+      egnx: { name: "East Midlands",         icao: "EGNX", thrLat: 52.8315, thrLon: -1.3090, heading: 270, rwy: "27",  atcName: "East Midlands Radar", twrName: "Tower",       altMeters: 93,  appFreq: "134.175", twrFreq: "124.000" },
+      egaa: { name: "Belfast International", icao: "EGAA", thrLat: 54.6628, thrLon: -6.1970, heading: 247, rwy: "25",  atcName: "Belfast Radar",    twrName: "Aldergrove Tower",altMeters: 82, appFreq: "128.500", twrFreq: "118.300" },
+      egac: { name: "George Best Belfast City",icao: "EGAC", thrLat: 54.6225, thrLon: -5.8640, heading: 221, rwy: "22", atcName: "City Approach",  twrName: "City Tower",     altMeters: 5,   appFreq: "130.850", twrFreq: "122.825" },
+      egpd: { name: "Aberdeen",              icao: "EGPD", thrLat: 57.1942, thrLon: -2.1930, heading: 341, rwy: "34",  atcName: "Aberdeen Radar",   twrName: "Aberdeen Tower", altMeters: 66, appFreq: "119.050", twrFreq: "118.100" },
+      egff: { name: "Cardiff",               icao: "EGFF", thrLat: 51.3932, thrLon: -3.3280, heading: 300, rwy: "30",  atcName: "Cardiff Radar",    twrName: "Cardiff Tower",  altMeters: 67, appFreq: "119.150", twrFreq: "133.100" },
+      egte: { name: "Exeter",                icao: "EGTE", thrLat: 50.7360, thrLon: -3.3985, heading: 257, rwy: "26",  atcName: "Exeter Approach",  twrName: "Exeter Tower",   altMeters: 31, appFreq: "128.975", twrFreq: "119.800" },
+      eghi: { name: "Southampton",           icao: "EGHI", thrLat: 50.9575, thrLon: -1.3525, heading: 202, rwy: "20",  atcName: "Southampton Radar",twrName: "Tower",          altMeters: 13, appFreq: "122.725", twrFreq: "118.200" },
+      eghh: { name: "Bournemouth",           icao: "EGHH", thrLat: 50.7818, thrLon: -1.8285, heading: 257, rwy: "26",  atcName: "Bournemouth Radar",twrName: "Tower",          altMeters: 12, appFreq: "119.475", twrFreq: "125.600" },
+      egsh: { name: "Norwich",               icao: "EGSH", thrLat: 52.6761, thrLon:  1.2965, heading: 268, rwy: "27",  atcName: "Norwich Radar",    twrName: "Norwich Tower",  altMeters: 36, appFreq: "119.350", twrFreq: "124.250" },
+      egpe: { name: "Inverness",             icao: "EGPE", thrLat: 57.5450, thrLon: -4.0325, heading: 231, rwy: "23",  atcName: "Inverness Approach",twrName: "Tower",         altMeters: 9,   appFreq: "122.600", twrFreq: "118.400" },
+      egsc: { name: "Cambridge City",        icao: "EGSC", thrLat: 52.2095, thrLon:  0.1870, heading: 231, rwy: "23",  atcName: "Cambridge Approach",twrName: "Tower",         altMeters: 15, appFreq: "120.900", twrFreq: "125.900" },
+      egns: { name: "Isle of Man (Ronaldsway)", icao: "EGNS", thrLat: 54.0850, thrLon: -4.6105, heading: 258, rwy: "26", atcName: "Isle of Man Approach", twrName: "Tower",    altMeters: 16, appFreq: "135.900", twrFreq: "118.900" },
+      egjb: { name: "Guernsey",              icao: "EGJB", thrLat: 49.4352, thrLon: -2.5895, heading: 268, rwy: "27",  atcName: "Guernsey Approach",twrName: "Guernsey Tower", altMeters: 102, appFreq: "128.650", twrFreq: "119.950" },
+      egjj: { name: "Jersey",                icao: "EGJJ", thrLat: 49.2078, thrLon: -2.1800, heading: 261, rwy: "26",  atcName: "Jersey Approach",  twrName: "Jersey Tower",   altMeters: 84, appFreq: "120.450", twrFreq: "119.450" }
     };
 
-    // Particle Systems for emergencies
     const engineFireSystem = viewer.scene.primitives.add(new Cesium.ParticleSystem({
       image: 'https://sandcastle.cesium.com/SampleData/fire.png',
       startColor: Cesium.Color.RED.withAlpha(0.9),
       endColor: Cesium.Color.YELLOW.withAlpha(0.1),
-      startScale: 1.0,
-      endScale: 4.0,
-      minimumParticleLife: 0.5,
-      maximumParticleLife: 1.2,
-      minimumSpeed: 8.0,
-      maximumSpeed: 14.0,
+      startScale: 1.0, endScale: 4.0,
+      minimumParticleLife: 0.5, maximumParticleLife: 1.2,
+      minimumSpeed: 8.0, maximumSpeed: 14.0,
       imageSize: new Cesium.Cartesian2(5, 5),
       emissionRate: 50.0,
       emitter: new Cesium.ConeEmitter(Cesium.Math.toRadians(15.0)),
@@ -269,12 +448,9 @@
       image: 'https://sandcastle.cesium.com/SampleData/smoke.png',
       startColor: Cesium.Color.DARKGRAY.withAlpha(0.8),
       endColor: Cesium.Color.BLACK.withAlpha(0.0),
-      startScale: 2.0,
-      endScale: 10.0,
-      minimumParticleLife: 2.0,
-      maximumParticleLife: 4.0,
-      minimumSpeed: 6.0,
-      maximumSpeed: 12.0,
+      startScale: 2.0, endScale: 10.0,
+      minimumParticleLife: 2.0, maximumParticleLife: 4.0,
+      minimumSpeed: 6.0, maximumSpeed: 12.0,
       imageSize: new Cesium.Cartesian2(7, 7),
       emissionRate: 40.0,
       emitter: new Cesium.ConeEmitter(Cesium.Math.toRadians(15.0)),
@@ -285,12 +461,9 @@
       image: 'https://sandcastle.cesium.com/SampleData/smoke.png',
       startColor: Cesium.Color.LIGHTGRAY.withAlpha(0.6),
       endColor: Cesium.Color.WHITE.withAlpha(0.0),
-      startScale: 1.0,
-      endScale: 5.0,
-      minimumParticleLife: 1.0,
-      maximumParticleLife: 3.0,
-      minimumSpeed: 2.0,
-      maximumSpeed: 5.0,
+      startScale: 1.0, endScale: 5.0,
+      minimumParticleLife: 1.0, maximumParticleLife: 3.0,
+      minimumSpeed: 2.0, maximumSpeed: 5.0,
       imageSize: new Cesium.Cartesian2(4, 4),
       emissionRate: 20.0,
       emitter: new Cesium.SphereEmitter(0.5),
@@ -301,12 +474,9 @@
       image: 'https://sandcastle.cesium.com/SampleData/fire.png',
       startColor: Cesium.Color.YELLOW.withAlpha(1.0),
       endColor: Cesium.Color.WHITE.withAlpha(0.0),
-      startScale: 0.5,
-      endScale: 0.1,
-      minimumParticleLife: 0.1,
-      maximumParticleLife: 0.3,
-      minimumSpeed: 15.0,
-      maximumSpeed: 25.0,
+      startScale: 0.5, endScale: 0.1,
+      minimumParticleLife: 0.1, maximumParticleLife: 0.3,
+      minimumSpeed: 15.0, maximumSpeed: 25.0,
       imageSize: new Cesium.Cartesian2(2, 2),
       emissionRate: 150.0,
       emitter: new Cesium.ConeEmitter(Cesium.Math.toRadians(45.0)),
@@ -327,10 +497,8 @@
     let radioScript = [];
     let displayedCommIndices = new Set();
     let currentAirportKey = "egll";
-    let isNight = false;
     let activeEmergency = 'none';
 
-    // Speech Synthesis initialization
     let voices = [];
     let audioUnlocked = false;
 
@@ -354,6 +522,7 @@
 
     function dispatchComm(comm, timeMins, timeSecs) {
       const phoneticText = comm.text
+        .replace(/PAN-PAN,\s*PAN-PAN,\s*PAN-PAN/gi, "Pan Pan, Pan Pan, Pan Pan")
         .replace(/Runway (\d)(\d)([a-zA-Z]?)/gi, (match, d1, d2, lr) => {
           let spoken = "Runway " + d1 + " " + d2;
           if (lr && lr.toUpperCase() === 'L') spoken += " Left";
@@ -366,10 +535,9 @@
         .replace(/BAW3/gi, "Speedbird 3")
         .replace(/1013/gi, "1 0 1 3")
         .replace(/1014/gi, "1 0 1 4")
-        // Speak frequencies as separate digits with "decimal"
         .replace(/(\d{3})\.(\d+)/g, (match, p1, p2) => {
-          let decimalPart = p2.replace(/0+$/, ''); // Strip trailing zeros
-          if (!decimalPart) decimalPart = '0'; // Handle exact decimals like .000
+          let decimalPart = p2.replace(/0+$/, '');
+          if (!decimalPart) decimalPart = '0';
           return p1.split('').join(' ') + ' decimal ' + decimalPart.split('').join(' ');
         });
 
@@ -405,14 +573,9 @@
         utterance.pitch = 1.25;
         utterance.rate = 1.05;
         const pilotVoice = voices.find(v => v.lang.includes("en") && (
-          v.name.includes("Female") ||
-          v.name.includes("Samantha") ||
-          v.name.includes("Victoria") ||
-          v.name.includes("Zira") ||
-          v.name.includes("Hazel") ||
-          v.name.includes("Susan") ||
-          v.name.includes("Karen") ||
-          v.name.includes("Catherine")
+          v.name.includes("Female") || v.name.includes("Samantha") || v.name.includes("Victoria") ||
+          v.name.includes("Zira") || v.name.includes("Hazel") || v.name.includes("Susan") ||
+          v.name.includes("Karen") || v.name.includes("Catherine")
         ));
         if (pilotVoice) utterance.voice = pilotVoice;
       }
@@ -423,7 +586,7 @@
     }
 
     const startTime = Cesium.JulianDate.fromIso8601("2026-06-21T12:00:00Z");
-    const duration = 190;
+    const duration = 180;
     const stopTime = Cesium.JulianDate.addSeconds(startTime, duration, new Cesium.JulianDate());
 
     viewer.clock.startTime = startTime.clone();
@@ -449,7 +612,6 @@
       const assignedAltFt = Math.round((3000 + fieldElevationFt) / 100) * 100;
       const intAltFt = Math.round((2200 + fieldElevationFt) / 100) * 100;
 
-      // Accurately synchronized to the generated waypoints (touchdown at s: 120, stop at s: 170)
       return [
         { s: 2, phase: "6-mile Final", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, ${ap.atcName}, radar contact 6 miles straight-in. Descend to altitude ${assignedAltFt} feet on QNH 1013.` },
         { s: 10, phase: "6-mile Final", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Descend ${assignedAltFt} feet on 1013, cleared ILS Runway ${ap.rwy}, Speedbird 3.` },
@@ -462,9 +624,9 @@
         { s: 88, phase: "Short Final 2 DME", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, wind ${(ap.heading + 5) % 360} degrees at 9 knots, Runway ${ap.rwy} cleared to land.` },
         { s: 96, phase: "Short Final 2 DME", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3.` },
         { s: 111, phase: "Threshold Crossing", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Passing threshold, 50... 30... 10... Retard.` },
-        { s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Touchdown.` },
-        { s: 145, phase: "Rollout", sender: "atc", freq: ap.twrFreq, label: ap.twrName, text: `Speedbird 3, turn left at the end, contact Ground on 121.7.` },
-        { s: 153, phase: "Vacating", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Left at the end, over to Ground on 121.7, Speedbird 3.` }
+        { s: 118, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Touchdown on centerline, thrust reverse normal, braking.` },
+        { s: 145, phase: "Rollout Deceleration", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Decelerating through 50 knots, reversers stowed.` },
+        { s: 160, phase: "Full Stop", sender: "pilot", freq: ap.twrFreq, label: "BAW3", text: `Speedbird 3 brought to a complete halt on the runway centerline.` }
       ];
     }
 
@@ -486,25 +648,23 @@
       const reciprocalHeading = (ap.heading + 180) % 360;
       const visualGroundZ = 2.0;
 
-      // Linear points simulating descent and gradual deceleration to an exact stop at s: 170
       const rawWaypoints = [
-        { s: 0,   dist: 11075, z: visualGroundZ + 580 }, // 6.0 NM
-        { s: 30,  dist: 7535,  z: visualGroundZ + 387 }, // 4.0 NM
-        { s: 60,  dist: 4535,  z: visualGroundZ + 231 }, // 2.4 NM
-        { s: 90,  dist: 1925,  z: visualGroundZ + 97 },  // 1.0 NM
-        { s: 110, dist: 385,   z: visualGroundZ + 25 },  // 0.2 NM
-        { s: 115, dist: 0,     z: visualGroundZ + 15 },  // Threshold (~50 ft)
-        { s: 120, dist: -350,  z: visualGroundZ },       // Touchdown (matches s: 120 dialogue)
-        { s: 135, dist: -1100, z: visualGroundZ },       // Rollout fast
-        { s: 155, dist: -1700, z: visualGroundZ },       // Rollout slow
-        { s: 170, dist: -1850, z: visualGroundZ },       // Complete Stop
-        { s: 171, dist: -1850, z: visualGroundZ },       // Interpolation hold
-        { s: 190, dist: -1850, z: visualGroundZ }        // Remain stopped
+        { s: 0,   dist: 11075, z: visualGroundZ + 580 },
+        { s: 30,  dist: 7535,  z: visualGroundZ + 387 },
+        { s: 60,  dist: 4535,  z: visualGroundZ + 231 },
+        { s: 90,  dist: 1925,  z: visualGroundZ + 97 },
+        { s: 110, dist: 385,   z: visualGroundZ + 25 },
+        { s: 114, dist: 0,     z: visualGroundZ + 15 },
+        { s: 118, dist: -300,  z: visualGroundZ },
+        { s: 130, dist: -750,  z: visualGroundZ },
+        { s: 145, dist: -1100, z: visualGroundZ },
+        { s: 160, dist: -1300, z: visualGroundZ },
+        { s: 180, dist: -1300, z: visualGroundZ }
       ];
 
       const waypoints = rawWaypoints.map(wp => {
         const bearing = wp.dist >= 0 ? reciprocalHeading : ap.heading;
-        const coords = calculateDestination(ap.lat, ap.lon, bearing, Math.abs(wp.dist));
+        const coords = calculateDestination(ap.thrLat, ap.thrLon, bearing, Math.abs(wp.dist));
         return { s: wp.s, lon: coords.lon, lat: coords.lat, z: wp.z };
       });
 
@@ -556,11 +716,12 @@
 
     function setTowerCamera() {
       const ap = airports[currentAirportKey];
+      const towerPos = calculateDestination(ap.thrLat, ap.thrLon, (ap.heading + 90) % 360, 300);
       viewer.camera.flyTo({
-        destination: Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, 120),
+        destination: Cesium.Cartesian3.fromDegrees(towerPos.lon, towerPos.lat, 100),
         orientation: {
           heading: Cesium.Math.toRadians((ap.heading + 180) % 360),
-          pitch: Cesium.Math.toRadians(5),
+          pitch: Cesium.Math.toRadians(-5),
           roll: 0
         },
         duration: 1.0
@@ -576,35 +737,30 @@
       const ap = airports[currentAirportKey];
 
       radioScript = radioScript.filter(comm => comm.s <= elapsedSec);
-      
       if (window.speechSynthesis) window.speechSynthesis.cancel(); 
 
       const injectTime = Math.max(Math.floor(elapsedSec) + 1, 10);
 
-      // Dialogue triggers are bound strictly to the telemetry (Touchdown is s: 120, Complete Stop is s: 170)
       if (type === 'fire') {
-        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, engine fire number two, severe loss of power. Requesting immediate priority landing Runway ${ap.rwy}.` });
-        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Number one for Runway ${ap.rwy}, cleared to land. Fire rescue deployed.` });
-        radioScript.push({ s: injectTime + 18, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3. Running checklists.` });
-        radioScript.push({ s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Touchdown. Maximum braking. Stopping on the runway.` });
-        radioScript.push({ s: 171, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 has stopped. Initiating immediate evacuation on the runway.` });
+        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, engine fire number two, severe loss of power. Priority landing Runway ${ap.rwy}.` });
+        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Number one for Runway ${ap.rwy}, cleared to land. Fire rescue dispatched.` });
+        radioScript.push({ s: injectTime + 18, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3. Fire bottle discharged.` });
+        radioScript.push({ s: 118, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Touchdown on centerline, maximum reverse and heavy braking.` });
+        radioScript.push({ s: 160, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 is stopped on centerline. Commencing immediate evacuation.` });
       } else if (type === 'fumes') {
-        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, acrid smoke and fumes in the cockpit. Crew donning oxygen masks.` });
-        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Cleared to land Runway ${ap.rwy}. Emergency services standing by.` });
-        radioScript.push({ s: injectTime + 18, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Cleared to land Runway ${ap.rwy}, Speedbird 3.` });
-        radioScript.push({ s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3, touchdown. Braking hard.` });
-        radioScript.push({ s: 171, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 stopped. Evacuating via slides.` });
+        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, cockpit fumes detected. Donning smoke goggles and oxygen.` });
+        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Direct to Runway ${ap.rwy}, cleared to land.` });
+        radioScript.push({ s: 118, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Touchdown on centerline, aggressive braking.` });
+        radioScript.push({ s: 160, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Stopped on runway centerline. Ordering evacuation via emergency slides.` });
       } else if (type === 'gear') {
-        radioScript.push({ s: injectTime, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `MAYDAY, MAYDAY, MAYDAY, Speedbird 3, unsafe gear indication. Nose gear shows not locked.` });
-        radioScript.push({ s: injectTime + 9, phase: "Emergency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, MAYDAY acknowledged. Crash rescue alerted. Cleared to land Runway ${ap.rwy}.` });
-        radioScript.push({ s: 112, phase: "Emergency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Cleared to land, Speedbird 3. Bracing for impact on touchdown.` });
-        radioScript.push({ s: 120, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Touchdown. Holding nose off as long as possible.` });
-        radioScript.push({ s: 135, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Nose is down. Scraping.` });
-        radioScript.push({ s: 171, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 stopped. Commencing evacuation.` });
+        radioScript.push({ s: injectTime, phase: "Urgency Declared", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `PAN-PAN, PAN-PAN, PAN-PAN, Speedbird 3, unsafe gear indication. Nose gear transit light illuminated, showing unsafe.` });
+        radioScript.push({ s: injectTime + 9, phase: "Urgency Declared", sender: "atc", freq: ap.appFreq, label: ap.atcName, text: `Speedbird 3, PAN-PAN acknowledged. Emergency services alerted to local standby. Runway ${ap.rwy} cleared to land.` });
+        radioScript.push({ s: 118, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Main gear touchdown on centerline. Holding nose attitude as long as possible.` });
+        radioScript.push({ s: 135, phase: "Touchdown & Rollout", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Nose down on the runway. Scraping along centerline.` });
+        radioScript.push({ s: 160, phase: "Evacuation", sender: "pilot", freq: ap.appFreq, label: "BAW3", text: `Speedbird 3 brought to a complete halt on centerline. Requesting fire rescue inspect gear.` });
       }
 
       radioScript.sort((a, b) => a.s - b.s);
-      
       document.getElementById("btn-em-fire").disabled = true;
       document.getElementById("btn-em-fumes").disabled = true;
       document.getElementById("btn-em-gear").disabled = true;
@@ -628,8 +784,6 @@
     const btnCockpit = document.getElementById("btn-cockpit");
     const btnTower = document.getElementById("btn-tower");
     const btnFree = document.getElementById("btn-free");
-    const btnLighting = document.getElementById("btn-lighting");
-    const speedSelect = document.getElementById("speedSelect");
     const modeButtons = [btnChase, btnCockpit, btnTower, btnFree];
     const cockpitOverlay = document.getElementById("cockpit-hud-overlay");
 
@@ -676,25 +830,6 @@
       viewer.trackedEntity = undefined;
     };
 
-    btnLighting.onclick = () => {
-      isNight = !isNight;
-      btnLighting.textContent = isNight ? "Day Mode" : "Night Mode";
-      if (isNight) {
-        viewer.scene.globe.enableLighting = true;
-        viewer.scene.light = new Cesium.DirectionalLight({
-          direction: new Cesium.Cartesian3(0.1, 0.2, -0.95),
-          intensity: 0.2
-        });
-      } else {
-        viewer.scene.globe.enableLighting = false;
-        viewer.scene.light = new Cesium.SunLight();
-      }
-    };
-
-    speedSelect.onchange = (e) => {
-      viewer.clock.multiplier = parseFloat(e.target.value);
-    };
-
     const hudAlt = document.getElementById("hud-alt");
     const hudSpeed = document.getElementById("hud-speed");
     const hudCoords = document.getElementById("hud-coords");
@@ -738,33 +873,32 @@
       });
 
       if (activeEmergency !== 'none') {
-        hudApproach.style.color = "#ef4444";
-        if (elapsedSec < 110) hudApproach.textContent = "EMERGENCY APPROACH";
-        else if (elapsedSec < 115) hudApproach.textContent = "EMERGENCY SHORT FINAL";
-        else if (elapsedSec < 170) hudApproach.textContent = "EMERGENCY ROLLOUT";
-        else hudApproach.textContent = "EMERGENCY EVACUATION";
+        hudApproach.style.color = activeEmergency === 'gear' ? "#f59e0b" : "#ef4444";
+        const prefix = activeEmergency === 'gear' ? "PAN-PAN" : "EMERGENCY";
+        if (elapsedSec < 110) hudApproach.textContent = `${prefix} APPROACH`;
+        else if (elapsedSec < 114) hudApproach.textContent = `${prefix} SHORT FINAL`;
+        else if (elapsedSec < 160) hudApproach.textContent = `${prefix} ROLLOUT`;
+        else hudApproach.textContent = activeEmergency === 'gear' ? "LOCAL STANDBY INSPECTION" : "EMERGENCY STOP / EVACUATION";
       } else {
         hudApproach.style.color = "#f8fafc";
         if (elapsedSec < 30) hudApproach.textContent = "6-mile Final";
-        else if (elapsedSec < 60) hudApproach.textContent = "Glide path Intercept";
+        else if (elapsedSec < 60) hudApproach.textContent = "Glidepath Intercept";
         else if (elapsedSec < 85) hudApproach.textContent = "4-mile Final";
         else if (elapsedSec < 110) hudApproach.textContent = "Short Final 2 DME";
-        else if (elapsedSec < 115) hudApproach.textContent = "Threshold Crossing";
-        else if (elapsedSec < 170) hudApproach.textContent = "Touchdown / Rollout";
-        else hudApproach.textContent = "Vacating Runway / Taxi";
+        else if (elapsedSec < 114) hudApproach.textContent = "Threshold Crossing";
+        else if (elapsedSec < 160) hudApproach.textContent = "Touchdown / Centerline Rollout";
+        else hudApproach.textContent = "Brought to Halt on Centerline";
       }
 
       if (currentPos) {
         const cartographic = Cesium.Cartographic.fromCartesian(currentPos);
         const lon = Cesium.Math.toDegrees(cartographic.longitude);
         const lat = Cesium.Math.toDegrees(cartographic.latitude);
-        
         const altFt = Math.round((cartographic.height - visualGroundZ + ap.altMeters) * 3.28084);
 
-        const thresholdCartesian = Cesium.Cartesian3.fromDegrees(ap.lon, ap.lat, visualGroundZ);
+        const thresholdCartesian = Cesium.Cartesian3.fromDegrees(ap.thrLon, ap.thrLat, visualGroundZ);
         const distMeters = Cesium.Cartesian3.distance(currentPos, thresholdCartesian);
-        
-        const thresholdDistNM = (elapsedSec > 115) ? -((distMeters / 1852).toFixed(2)) : (distMeters / 1852).toFixed(2);
+        const thresholdDistNM = (elapsedSec > 114) ? -((distMeters / 1852).toFixed(2)) : (distMeters / 1852).toFixed(2);
 
         hudAlt.textContent = `${altFt.toLocaleString()} ft`;
         hudCoords.textContent = `${lat.toFixed(4)}°N, ${Math.abs(lon).toFixed(4)}°W`;
@@ -786,7 +920,7 @@
           }
 
           let kts = Math.round((stepDistance / 0.25) * 1.94384);
-          if (elapsedSec > 168 && kts < 5) kts = 0; 
+          if (elapsedSec >= 160) kts = 0; 
           
           hudSpeed.textContent = `${kts} kts`;
           hudCockpitSpd.textContent = `${kts}`;
@@ -831,7 +965,7 @@
             cockpitSmokeSystem.emitterModelMatrix = Cesium.Matrix4.fromTranslationRotationScale(trs);
           }
 
-          if (activeEmergency === 'gear' && elapsedSec >= 120 && kts > 10) {
+          if (activeEmergency === 'gear' && elapsedSec >= 118 && kts > 10) {
             gearSparkSystem.show = true;
             gearSparkSystem.modelMatrix = modelMatrix;
             const trs = new Cesium.TranslationRotationScale();
