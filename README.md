@@ -6,7 +6,7 @@ A client-side 3D flight simulation and approach tracking tool built with [Cesium
 
 ## Overview
 
-The application simulates a commercial flight (`SPEEDBIRD 3`) navigating instrument approaches under UK Air Traffic Control. It pairs geospatial 3D trajectory tracking with real-world airport telemetry, procedural ATC comms, an interactive Heads-Up Display (HUD), and dynamic particle effects for emergency scenarios.
+The application simulates a commercial flight navigating instrument approaches under UK Air Traffic Control. It pairs geospatial 3D trajectory tracking with real-world airport telemetry, procedural ATC comms, an interactive Heads-Up Display (HUD), and dynamic particle effects for emergency scenarios.
 
 ---
 
